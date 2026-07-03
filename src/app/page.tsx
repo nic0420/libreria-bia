@@ -37,7 +37,7 @@ export default async function Home() {
               Lo último en tendencias de librería ha llegado.
             </p>
           </div>
-          <Link href="/novedades" className="hidden sm:flex group items-center gap-1 text-sm font-semibold text-secondary-500 hover:text-secondary-600 transition-colors">
+          <Link href="/libreria" className="hidden sm:flex group items-center gap-1 text-sm font-semibold text-secondary-500 hover:text-secondary-600 transition-colors">
             Ver Todo <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Link>
         </div>

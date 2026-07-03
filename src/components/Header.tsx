@@ -86,12 +86,12 @@ export default function Header() {
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-center px-4 sm:px-6 lg:px-8">
           <ul className="flex items-center space-x-10 text-sm font-bold uppercase tracking-wide text-white">
             <li className="relative group/menu h-full flex items-center">
-              <Link href="/novedades" className="flex items-center gap-1 hover:text-secondary-300 transition-colors">
+              <Link href="/libreria" className="flex items-center gap-1 hover:text-secondary-300 transition-colors">
                 Novedades
               </Link>
             </li>
             <li className="relative group/menu h-full flex items-center">
-              <Link href="/ofertas" className="flex items-center gap-1 text-secondary-300 hover:text-white transition-colors">
+              <Link href="/libreria" className="flex items-center gap-1 text-secondary-300 hover:text-white transition-colors">
                 Promos 📢
               </Link>
             </li>
@@ -101,12 +101,12 @@ export default function Header() {
               </Link>
             </li>
             <li className="relative group/menu h-full flex items-center cursor-pointer hover:text-secondary-300 transition-colors">
-               <span className="flex items-center gap-1">
-                Papelería Comercial <ChevronDown className="h-4 w-4" />
-              </span>
+               <Link href="/libreria" className="flex items-center gap-1">
+                Papelería Comercial
+              </Link>
             </li>
             <li className="relative group/menu h-full flex items-center">
-              <Link href="/regalos" className="hover:text-secondary-300 transition-colors">
+              <Link href="/libreria" className="hover:text-secondary-300 transition-colors">
                 Regalos
               </Link>
             </li>
