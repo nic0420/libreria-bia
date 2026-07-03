@@ -1,5 +1,6 @@
 import { Product } from "@/types/product";
 import Image from "next/image";
+import Link from "next/link";
 import { ShoppingCart } from "lucide-react";
 
 interface ProductCardProps {
@@ -17,7 +18,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
-    <div className="group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-zinc-200 transition-all hover:shadow-md hover:ring-primary-300">
+    <Link href={`/producto/${product.id}`} className="group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-zinc-200 transition-all hover:shadow-md hover:ring-primary-300">
       <div className="relative aspect-square overflow-hidden bg-zinc-100">
         <Image
           src={product.image}
@@ -52,12 +53,15 @@ export default function ProductCard({ product }: ProductCardProps) {
           <span className="text-2xl font-black text-primary-600">
             {formatPrice(product.price)}
           </span>
-          <button className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-50 text-primary-600 transition-all hover:scale-110 hover:bg-secondary-400 hover:text-white shadow-sm">
+          <button 
+            onClick={(e) => { e.preventDefault(); /* Prevent link click */ alert('Añadido al carrito'); }}
+            className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-50 text-primary-600 transition-all hover:scale-110 hover:bg-secondary-400 hover:text-white shadow-sm"
+          >
             <ShoppingCart className="h-5 w-5" />
             <span className="sr-only">Agregar al carrito</span>
           </button>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }

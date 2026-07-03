@@ -96,9 +96,9 @@ export default function Header() {
               </Link>
             </li>
             <li className="relative group/menu h-full flex items-center group cursor-pointer hover:text-secondary-300 transition-colors">
-              <span className="flex items-center gap-1">
-                Librería <ChevronDown className="h-4 w-4" />
-              </span>
+              <Link href="/libreria" className="flex items-center gap-1">
+                Librería
+              </Link>
             </li>
             <li className="relative group/menu h-full flex items-center cursor-pointer hover:text-secondary-300 transition-colors">
                <span className="flex items-center gap-1">
