@@ -98,14 +98,16 @@ export default function AdminUploadPage() {
         body: JSON.stringify(products),
       });
 
+      const data = await response.json().catch(() => null);
+
       if (!response.ok) {
-        throw new Error('Error al publicar los productos');
+        throw new Error(data?.details || data?.error || 'Error desconocido al publicar los productos');
       }
 
       alert('¡Productos publicados exitosamente en la tienda!');
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Hubo un error al publicar. Verifica que la base de datos esté conectada.');
+      alert('Hubo un error al publicar: ' + (err.message || 'Verifica la consola.'));
     } finally {
       setIsPublishing(false);
     }

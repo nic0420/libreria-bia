@@ -39,8 +39,8 @@ export async function POST(request: Request) {
     }
     
     return NextResponse.json({ message: 'Products synced successfully' });
-  } catch (error) {
+  } catch (error: any) {
     console.error('API Error:', error);
-    return NextResponse.json({ error: 'Failed to sync products' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to sync products', details: error.message || String(error) }, { status: 500 });
   }
 }
