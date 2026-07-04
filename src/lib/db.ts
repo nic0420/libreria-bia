@@ -1,4 +1,6 @@
 import { sql } from '@vercel/postgres';
+import fs from 'fs/promises';
+import path from 'path';
 
 export type Product = {
   id: string;
@@ -10,44 +12,99 @@ export type Product = {
   image: string;
 };
 
+const hasPostgres = !!process.env.POSTGRES_URL;
+const dataFilePath = path.join(process.cwd(), 'data', 'products.json');
+
+async function ensureDataDir() {
+  const dir = path.join(process.cwd(), 'data');
+  try {
+    await fs.access(dir);
+  } catch {
+    await fs.mkdir(dir, { recursive: true });
+  }
+}
+
 export async function createTable() {
-  await sql`
-    CREATE TABLE IF NOT EXISTS products (
-      id VARCHAR(255) PRIMARY KEY,
-      name VARCHAR(255) NOT NULL,
-      description TEXT,
-      price NUMERIC NOT NULL,
-      stock INTEGER NOT NULL,
-      category VARCHAR(255),
-      image TEXT
-    );
-  `;
+  if (hasPostgres) {
+    await sql`
+      CREATE TABLE IF NOT EXISTS products (
+        id VARCHAR(255) PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        price NUMERIC NOT NULL,
+        stock INTEGER NOT NULL,
+        category VARCHAR(255),
+        image TEXT
+      );
+    `;
+  } else {
+    await ensureDataDir();
+    try {
+      await fs.access(dataFilePath);
+    } catch {
+      await fs.writeFile(dataFilePath, JSON.stringify([]));
+    }
+  }
 }
 
 export async function getProducts(): Promise<Product[]> {
   try {
-    const { rows } = await sql<Product>`SELECT * FROM products ORDER BY name ASC`;
-    return rows;
+    if (hasPostgres) {
+      const { rows } = await sql<Product>`SELECT * FROM products ORDER BY name ASC`;
+      return rows;
+    } else {
+      await ensureDataDir();
+      try {
+        const data = await fs.readFile(dataFilePath, 'utf-8');
+        const products = JSON.parse(data) as Product[];
+        return products.sort((a, b) => a.name.localeCompare(b.name));
+      } catch {
+        return [];
+      }
+    }
   } catch (error) {
-    console.error('Error fetching products from Postgres:', error);
+    console.error('Error fetching products:', error);
     return [];
   }
 }
 
 export async function clearProducts() {
-  await sql`DELETE FROM products`;
+  if (hasPostgres) {
+    await sql`DELETE FROM products`;
+  } else {
+    await ensureDataDir();
+    await fs.writeFile(dataFilePath, JSON.stringify([]));
+  }
 }
 
 export async function insertProduct(product: Product) {
-  await sql`
-    INSERT INTO products (id, name, description, price, stock, category, image)
-    VALUES (${product.id}, ${product.name}, ${product.description}, ${product.price}, ${product.stock}, ${product.category}, ${product.image})
-    ON CONFLICT (id) DO UPDATE SET
-      name = EXCLUDED.name,
-      description = EXCLUDED.description,
-      price = EXCLUDED.price,
-      stock = EXCLUDED.stock,
-      category = EXCLUDED.category,
-      image = EXCLUDED.image;
-  `;
+  if (hasPostgres) {
+    await sql`
+      INSERT INTO products (id, name, description, price, stock, category, image)
+      VALUES (${product.id}, ${product.name}, ${product.description}, ${product.price}, ${product.stock}, ${product.category}, ${product.image})
+      ON CONFLICT (id) DO UPDATE SET
+        name = EXCLUDED.name,
+        description = EXCLUDED.description,
+        price = EXCLUDED.price,
+        stock = EXCLUDED.stock,
+        category = EXCLUDED.category,
+        image = EXCLUDED.image;
+    `;
+  } else {
+    await ensureDataDir();
+    let products: Product[] = [];
+    try {
+      const data = await fs.readFile(dataFilePath, 'utf-8');
+      products = JSON.parse(data);
+    } catch {}
+    
+    const index = products.findIndex(p => p.id === product.id);
+    if (index >= 0) {
+      products[index] = product;
+    } else {
+      products.push(product);
+    }
+    
+    await fs.writeFile(dataFilePath, JSON.stringify(products, null, 2));
+  }
 }
