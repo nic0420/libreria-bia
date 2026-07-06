@@ -14,6 +14,7 @@ export async function getProducts(): Promise<Product[]> {
         name: "Cuaderno A5 Rayado pastel",
         description: "Cuaderno tamaño A5, 80 hojas rayadas. Tapas duras en tonos pasteles.",
         price: 3500,
+        cost: 2000,
         stock: 10,
         category: "Cuadernos",
         image: "https://via.placeholder.com/300x300.png?text=Cuaderno+Pastel"
@@ -23,6 +24,7 @@ export async function getProducts(): Promise<Product[]> {
         name: "Resaltadores Pastel x6",
         description: "Set de 6 resaltadores en tonos pastel, ideales para lettering y estudio.",
         price: 2800,
+        cost: 1500,
         stock: 15,
         category: "Librería",
         image: "https://via.placeholder.com/300x300.png?text=Resaltadores"
@@ -32,6 +34,7 @@ export async function getProducts(): Promise<Product[]> {
         name: "Agenda 2026 Semanal",
         description: "Agenda diseño minimalista, formato semanal con anillado.",
         price: 9500,
+        cost: 5000,
         stock: 5,
         category: "Agendas",
         image: "https://via.placeholder.com/300x300.png?text=Agenda+2026"
@@ -61,6 +64,7 @@ export async function getProducts(): Promise<Product[]> {
         name: values[1] || "",
         description: values[2] || "",
         price: parseFloat(values[3]) || 0,
+        cost: 0,
         stock: parseInt(values[4]) || 0,
         category: values[5] || "",
         image: values[6] || "https://via.placeholder.com/300"
