@@ -85,29 +85,41 @@ export default function Header() {
       <nav className="hidden lg:block border-b border-zinc-200 bg-primary-600 shadow-sm relative z-40">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-center px-4 sm:px-6 lg:px-8">
           <ul className="flex items-center space-x-10 text-sm font-bold uppercase tracking-wide text-white">
+            {/* Categorías Dropdown */}
             <li className="relative group/menu h-full flex items-center">
-              <Link href="/libreria" className="flex items-center gap-1 hover:text-secondary-300 transition-colors">
-                Novedades
-              </Link>
+              <div className="flex items-center gap-1 h-full cursor-pointer hover:text-secondary-300 transition-colors py-4">
+                Categorías <ChevronDown className="w-4 h-4 transition-transform group-hover/menu:rotate-180" />
+              </div>
+              
+              {/* Dropdown Menu */}
+              <div className="absolute top-full left-0 w-64 opacity-0 invisible group-hover/menu:opacity-100 group-hover/menu:visible transition-all duration-200 ease-in-out bg-white shadow-xl border border-zinc-100 rounded-b-lg overflow-hidden transform origin-top text-zinc-800 font-medium">
+                <Link href="/libreria" className="block px-5 py-3 text-primary-600 bg-primary-50 hover:bg-primary-100 transition-colors font-bold border-b border-zinc-100">
+                  Ver todo el catálogo
+                </Link>
+                <Link href="/libreria?categoria=escolar" className="block px-5 py-3 hover:bg-zinc-50 hover:text-primary-600 transition-colors border-b border-zinc-50">
+                  Escolar
+                </Link>
+                <Link href="/libreria?categoria=oficina" className="block px-5 py-3 hover:bg-zinc-50 hover:text-primary-600 transition-colors border-b border-zinc-50">
+                  Oficina
+                </Link>
+                <Link href="/libreria?categoria=arte" className="block px-5 py-3 hover:bg-zinc-50 hover:text-primary-600 transition-colors border-b border-zinc-50">
+                  Arte y Diseño
+                </Link>
+                <Link href="/libreria?categoria=regalos" className="block px-5 py-3 hover:bg-zinc-50 hover:text-primary-600 transition-colors">
+                  Regalos
+                </Link>
+              </div>
             </li>
+
             <li className="relative group/menu h-full flex items-center">
-              <Link href="/libreria" className="flex items-center gap-1 text-secondary-300 hover:text-white transition-colors">
+              <Link href="/libreria" className="flex items-center gap-1 text-secondary-300 hover:text-white transition-colors py-4">
                 Promos 📢
               </Link>
             </li>
-            <li className="relative group/menu h-full flex items-center group cursor-pointer hover:text-secondary-300 transition-colors">
-              <Link href="/libreria" className="flex items-center gap-1">
+            
+            <li className="relative group/menu h-full flex items-center hover:text-secondary-300 transition-colors">
+              <Link href="/libreria" className="flex items-center gap-1 py-4">
                 Librería
-              </Link>
-            </li>
-            <li className="relative group/menu h-full flex items-center cursor-pointer hover:text-secondary-300 transition-colors">
-               <Link href="/libreria" className="flex items-center gap-1">
-                Papelería Comercial
-              </Link>
-            </li>
-            <li className="relative group/menu h-full flex items-center">
-              <Link href="/libreria" className="hover:text-secondary-300 transition-colors">
-                Regalos
               </Link>
             </li>
           </ul>
