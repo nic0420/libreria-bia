@@ -130,3 +130,99 @@ export async function deleteProduct(id: string) {
     await fs.writeFile(dataFilePath, JSON.stringify(products, null, 2));
   }
 }
+
+export type Category = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
+const categoriesFilePath = path.join(process.cwd(), 'data', 'categories.json');
+
+export async function createCategoryTable() {
+  if (hasPostgres) {
+    await sql`
+      CREATE TABLE IF NOT EXISTS categories (
+        id VARCHAR(255) PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        slug VARCHAR(255) NOT NULL
+      );
+    `;
+  } else {
+    await ensureDataDir();
+    try {
+      await fs.access(categoriesFilePath);
+    } catch {
+      await fs.writeFile(categoriesFilePath, JSON.stringify([
+        { id: '1', name: 'Escolar', slug: 'escolar' },
+        { id: '2', name: 'Oficina', slug: 'oficina' },
+        { id: '3', name: 'Arte y Diseño', slug: 'arte-y-diseno' },
+        { id: '4', name: 'Regalos', slug: 'regalos' }
+      ]));
+    }
+  }
+}
+
+export async function getCategories(): Promise<Category[]> {
+  try {
+    if (hasPostgres) {
+      const { rows } = await sql<Category>`SELECT * FROM categories ORDER BY name ASC`;
+      return rows;
+    } else {
+      await ensureDataDir();
+      try {
+        const data = await fs.readFile(categoriesFilePath, 'utf-8');
+        return JSON.parse(data) as Category[];
+      } catch {
+        return [];
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    return [];
+  }
+}
+
+export async function insertCategory(category: Category) {
+  if (hasPostgres) {
+    await sql`
+      INSERT INTO categories (id, name, slug)
+      VALUES (${category.id}, ${category.name}, ${category.slug})
+      ON CONFLICT (id) DO UPDATE SET
+        name = EXCLUDED.name,
+        slug = EXCLUDED.slug;
+    `;
+  } else {
+    await ensureDataDir();
+    let categories: Category[] = [];
+    try {
+      const data = await fs.readFile(categoriesFilePath, 'utf-8');
+      categories = JSON.parse(data);
+    } catch {}
+    
+    const index = categories.findIndex(c => c.id === category.id);
+    if (index >= 0) {
+      categories[index] = category;
+    } else {
+      categories.push(category);
+    }
+    
+    await fs.writeFile(categoriesFilePath, JSON.stringify(categories, null, 2));
+  }
+}
+
+export async function deleteCategory(id: string) {
+  if (hasPostgres) {
+    await sql`DELETE FROM categories WHERE id = ${id}`;
+  } else {
+    await ensureDataDir();
+    let categories: Category[] = [];
+    try {
+      const data = await fs.readFile(categoriesFilePath, 'utf-8');
+      categories = JSON.parse(data);
+    } catch {}
+    
+    categories = categories.filter(c => c.id !== id);
+    await fs.writeFile(categoriesFilePath, JSON.stringify(categories, null, 2));
+  }
+}

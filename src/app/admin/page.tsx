@@ -21,10 +21,15 @@ type Product = {
 };
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<'products' | 'finance'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'finance' | 'categories'>('products');
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<{id: string, name: string, slug: string}[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const productsPerPage = 20;
 
   // Modals state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -40,12 +45,32 @@ export default function AdminDashboard() {
   const fetchProducts = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/products');
-      if (!res.ok) throw new Error('Failed to fetch products');
-      const data = await res.json();
-      setProducts(data);
+      const [resProd, resCat] = await Promise.all([
+        fetch('/api/products'),
+        fetch('/api/categories')
+      ]);
+      if (resProd.ok) setProducts(await resProd.json());
+      if (resCat.ok) setCategories(await resCat.json());
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAutoCategorize = async () => {
+    if (!confirm('¿Quieres asignar categorías automáticamente a todos tus productos? Esto modificará la categoría de los productos.')) return;
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/categorize-run');
+      if (res.ok) {
+        alert("¡Categorización automática exitosa!");
+        await fetchProducts();
+      } else {
+        alert("Hubo un problema con la categorización");
+      }
+    } catch (err) {
+      alert("Error: " + String(err));
     } finally {
       setIsLoading(false);
     }
@@ -168,6 +193,19 @@ export default function AdminDashboard() {
   }, 0);
   const totalInventoryValue = products.reduce((sum, p) => sum + (Number(p.price) * Number(p.stock)), 0);
 
+  // Pagination Logic
+  const indexOfLastProduct = currentPage * productsPerPage;
+  const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
+  const currentProducts = products.slice(indexOfFirstProduct, indexOfLastProduct);
+  const totalPages = Math.ceil(products.length / productsPerPage);
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+  };
+  const handlePrevPage = () => {
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 p-8">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -193,6 +231,12 @@ export default function AdminDashboard() {
               className={`px-4 py-2 rounded-md font-medium text-sm transition-colors flex items-center gap-2 ${activeTab === 'finance' ? 'bg-white shadow-sm text-primary-600' : 'text-gray-600 hover:text-gray-900'}`}
             >
               <BarChart3 className="w-4 h-4" /> Finanzas
+            </button>
+            <button
+              onClick={() => setActiveTab('categories')}
+              className={`px-4 py-2 rounded-md font-medium text-sm transition-colors flex items-center gap-2 ${activeTab === 'categories' ? 'bg-white shadow-sm text-primary-600' : 'text-gray-600 hover:text-gray-900'}`}
+            >
+              <Package className="w-4 h-4" /> Categorías
             </button>
           </div>
         </header>
@@ -240,7 +284,7 @@ export default function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
-                        {products.map((p) => (
+                        {currentProducts.map((p) => (
                           <tr key={p.id} className="hover:bg-gray-50 transition-colors">
                             <td className="px-6 py-3">
                               <div className="flex items-center gap-3">
@@ -288,6 +332,33 @@ export default function AdminDashboard() {
                       </tbody>
                     </table>
                   </div>
+                  {/* Pagination Controls */}
+                  {totalPages > 1 && (
+                    <div className="p-4 border-t border-gray-100 flex items-center justify-between bg-gray-50">
+                      <span className="text-sm text-gray-500">
+                        Mostrando {indexOfFirstProduct + 1} - {Math.min(indexOfLastProduct, products.length)} de {products.length} productos
+                      </span>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={handlePrevPage}
+                          disabled={currentPage === 1}
+                          className="px-3 py-1 rounded-md bg-white border border-gray-200 text-sm font-medium text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+                        >
+                          Anterior
+                        </button>
+                        <span className="px-3 py-1 text-sm font-medium text-gray-700">
+                          Página {currentPage} de {totalPages}
+                        </span>
+                        <button
+                          onClick={handleNextPage}
+                          disabled={currentPage === totalPages}
+                          className="px-3 py-1 rounded-md bg-white border border-gray-200 text-sm font-medium text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+                        >
+                          Siguiente
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -363,6 +434,93 @@ export default function AdminDashboard() {
                 </div>
               </div>
             )}
+             {/* CATEGORIES TAB */}
+            {activeTab === 'categories' && (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                  <h2 className="text-lg font-semibold flex items-center gap-2">
+                    <Package className="w-5 h-5 text-gray-500" /> Gestionar Categorías ({categories.length})
+                  </h2>
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={handleAutoCategorize}
+                      className="flex items-center px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors font-medium text-sm"
+                    >
+                      <Package className="w-4 h-4 mr-2" /> Categorización Automática
+                    </button>
+                    <button
+                      onClick={() => {
+                        const name = prompt('Nombre de la nueva categoría:');
+                        if (name) {
+                           fetch('/api/categories', {
+                             method: 'POST',
+                             body: JSON.stringify({ name }),
+                             headers: { 'Content-Type': 'application/json' }
+                           }).then(() => fetchProducts());
+                        }
+                      }}
+                      className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors shadow-sm font-medium text-sm"
+                    >
+                      <Plus className="w-4 h-4 mr-2" /> Nueva Categoría
+                    </button>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                  <table className="w-full text-sm text-left">
+                    <thead className="text-xs text-gray-600 uppercase bg-gray-50 border-b border-gray-100">
+                      <tr>
+                        <th className="px-6 py-4">Nombre</th>
+                        <th className="px-6 py-4">Slug</th>
+                        <th className="px-6 py-4 text-right">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {categories.map((c) => (
+                        <tr key={c.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-3 font-medium text-gray-900">{c.name}</td>
+                          <td className="px-6 py-3 text-gray-600">{c.slug}</td>
+                          <td className="px-6 py-3 text-right">
+                            <button 
+                              onClick={() => {
+                                const name = prompt('Editar nombre de categoría:', c.name);
+                                if (name) {
+                                  fetch(`/api/categories/${c.id}`, {
+                                    method: 'PUT',
+                                    body: JSON.stringify({ name }),
+                                    headers: { 'Content-Type': 'application/json' }
+                                  }).then(() => fetchProducts());
+                                }
+                              }} 
+                              className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button 
+                              onClick={() => {
+                                if (confirm('¿Seguro que quieres eliminar esta categoría?')) {
+                                  fetch(`/api/categories/${c.id}`, { method: 'DELETE' }).then(() => fetchProducts());
+                                }
+                              }}
+                              className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                      {categories.length === 0 && (
+                        <tr>
+                          <td colSpan={3} className="px-6 py-12 text-center text-gray-500">
+                            No hay categorías. Añade una para empezar.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
@@ -396,7 +554,12 @@ export default function AdminDashboard() {
 
                 <div className="space-y-1">
                   <label className="text-sm font-medium text-gray-700">Categoría</label>
-                  <input name="category" value={formData.category} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none" />
+                  <select name="category" value={formData.category} onChange={handleInputChange as any} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none">
+                    <option value="">Sin Categoría</option>
+                    {categories.map(c => (
+                      <option key={c.id} value={c.name}>{c.name}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="space-y-1">
                   <label className="text-sm font-medium text-gray-700">Stock</label>
