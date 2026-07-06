@@ -20,9 +20,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
     await insertProduct(product);
     return NextResponse.json({ message: 'Product updated successfully', product });
-  } catch (error: any) {
+  } catch (error) {
     console.error('API Error:', error);
-    return NextResponse.json({ error: 'Failed to update product', details: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to update product', details: error instanceof Error ? error.message : String(error) }, { status: 500 });
   }
 }
 
@@ -31,8 +31,8 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     const resolvedParams = await params;
     await deleteProduct(resolvedParams.id);
     return NextResponse.json({ message: 'Product deleted successfully' });
-  } catch (error: any) {
+  } catch (error) {
     console.error('API Error:', error);
-    return NextResponse.json({ error: 'Failed to delete product', details: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to delete product', details: error instanceof Error ? error.message : String(error) }, { status: 500 });
   }
 }

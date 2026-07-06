@@ -44,8 +44,8 @@ export default function AdminDashboard() {
       if (!res.ok) throw new Error('Failed to fetch products');
       const data = await res.json();
       setProducts(data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setIsLoading(false);
     }
@@ -89,8 +89,8 @@ export default function AdminDashboard() {
       setIsModalOpen(false);
       setEditingProduct(null);
       setFormData({ id: '', name: '', description: '', price: 0, cost: 0, stock: 0, category: '', image: '' });
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : String(err));
     }
   };
 
@@ -100,8 +100,8 @@ export default function AdminDashboard() {
       const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Error deleting product');
       await fetchProducts();
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : String(err));
     }
   };
 
@@ -151,8 +151,8 @@ export default function AdminDashboard() {
         await fetchProducts();
         setIsExcelModalOpen(false);
         alert('Productos subidos con éxito');
-      } catch (err: any) {
-        alert("Error al leer/subir el archivo: " + err.message);
+      } catch (err) {
+        alert("Error al leer/subir el archivo: " + (err instanceof Error ? err.message : String(err)));
       } finally {
         setIsPublishing(false);
       }
