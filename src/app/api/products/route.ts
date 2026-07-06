@@ -29,12 +29,12 @@ export async function POST(request: Request) {
         id: String(raw.id || raw.Id || raw.ID || raw.codigo || raw.Codigo || (i + 1)),
         name: String(raw.name || raw.Name || raw.nombre || raw.Nombre || raw.Producto || "Sin Nombre"),
         description: String(raw.description || raw.Description || raw.descripcion || raw.Descripcion || ""),
-        price: parseFloat(raw.price || raw.Price || raw.precio || raw.Precio || 0) || 0,
-        cost: parseFloat(raw.cost || raw.Cost || raw.costo || raw.Costo || 0) || 0,
-        discountPrice: raw.discountPrice || raw.precioOferta ? parseFloat(raw.discountPrice || raw.precioOferta) : undefined,
-        stock: parseInt(raw.stock || raw.Stock || raw.cantidad || raw.Cantidad || 0) || 0,
-        category: String(raw.category || raw.Category || raw.categoria || raw.Categoria || ""),
-        image: String(raw.image || raw.Image || raw.imagen || raw.Imagen || raw.foto || "https://via.placeholder.com/300")
+        price: parseFloat(String(raw.price || raw.Price || raw.precio || raw.Precio || 0)) || 0,
+        cost: parseFloat(String(raw.cost || raw.Cost || raw.costo || raw.Costo || 0)) || 0,
+        discountPrice: raw.discountPrice || raw.precioOferta ? parseFloat(String(raw.discountPrice || raw.precioOferta)) : undefined,
+        stock: parseInt(String(raw.stock || raw.Stock || raw.cantidad || raw.Cantidad || 0)) || 0,
+        category: String(raw.category || raw.Category || raw.categoria || raw.Categoria || "General"),
+        image: String(raw.image || raw.Image || raw.imagen || raw.Imagen || "https://via.placeholder.com/300")
       };
 
       await insertProduct(product);
