@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ShoppingCart, ChevronRight, Truck, ShieldCheck, Heart } from "lucide-react";
 import { notFound } from "next/navigation";
+import AddToCartButton from "@/components/AddToCartButton";
 
 interface ProductPageProps {
   params: Promise<{ id: string }>;
@@ -98,13 +99,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <button 
-                    disabled={product.stock === 0}
-                    className={`flex-1 flex items-center justify-center h-14 rounded-full font-bold text-lg transition-all shadow-md ${product.stock > 0 ? 'bg-primary-600 hover:bg-primary-700 text-white hover:shadow-lg' : 'bg-zinc-200 text-zinc-400 cursor-not-allowed'}`}
-                  >
-                    <ShoppingCart className="w-5 h-5 mr-2" />
-                    {product.stock > 0 ? 'Agregar al carrito' : 'Sin stock'}
-                  </button>
+                  <AddToCartButton product={product} />
                 </div>
               </div>
 

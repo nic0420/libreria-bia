@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ShoppingCart, Search, User, LifeBuoy, Menu, ChevronDown } from "lucide-react";
+import { Search, User, LifeBuoy, Menu, ChevronDown } from "lucide-react";
+import CartIcon from "./CartIcon";
 
 export default function Header() {
   return (
@@ -56,15 +57,7 @@ export default function Header() {
             </Link>
 
             {/* Cart (Mi Carrito) */}
-            <Link href="/carrito" className="relative flex flex-col items-center justify-center gap-1 group text-zinc-500 hover:text-primary-600 transition-colors cursor-pointer">
-              <div className="relative">
-                <ShoppingCart className="h-6 w-6 group-hover:-translate-y-1 transition-transform text-primary-600" />
-                <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-secondary-500 text-[10px] font-bold text-white shadow-sm">
-                  0
-                </span>
-              </div>
-              <span className="hidden sm:block text-[10px] font-bold uppercase tracking-widest text-zinc-400 group-hover:text-primary-600 mt-1">Mi Carrito</span>
-            </Link>
+            <CartIcon />
           </div>
         </div>
 
