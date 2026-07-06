@@ -7,6 +7,8 @@ export type Product = {
   name: string;
   description: string;
   price: number;
+  cost: number;
+  discountPrice?: number;
   stock: number;
   category: string;
   image: string;
@@ -32,6 +34,8 @@ export async function createTable() {
         name VARCHAR(255) NOT NULL,
         description TEXT,
         price NUMERIC NOT NULL,
+        cost NUMERIC DEFAULT 0,
+        "discountPrice" NUMERIC,
         stock INTEGER NOT NULL,
         category VARCHAR(255),
         image TEXT
@@ -80,12 +84,14 @@ export async function clearProducts() {
 export async function insertProduct(product: Product) {
   if (hasPostgres) {
     await sql`
-      INSERT INTO products (id, name, description, price, stock, category, image)
-      VALUES (${product.id}, ${product.name}, ${product.description}, ${product.price}, ${product.stock}, ${product.category}, ${product.image})
+      INSERT INTO products (id, name, description, price, cost, "discountPrice", stock, category, image)
+      VALUES (${product.id}, ${product.name}, ${product.description}, ${product.price}, ${product.cost}, ${product.discountPrice}, ${product.stock}, ${product.category}, ${product.image})
       ON CONFLICT (id) DO UPDATE SET
         name = EXCLUDED.name,
         description = EXCLUDED.description,
         price = EXCLUDED.price,
+        cost = EXCLUDED.cost,
+        "discountPrice" = EXCLUDED."discountPrice",
         stock = EXCLUDED.stock,
         category = EXCLUDED.category,
         image = EXCLUDED.image;
@@ -105,6 +111,22 @@ export async function insertProduct(product: Product) {
       products.push(product);
     }
     
+    await fs.writeFile(dataFilePath, JSON.stringify(products, null, 2));
+  }
+}
+
+export async function deleteProduct(id: string) {
+  if (hasPostgres) {
+    await sql`DELETE FROM products WHERE id = ${id}`;
+  } else {
+    await ensureDataDir();
+    let products: Product[] = [];
+    try {
+      const data = await fs.readFile(dataFilePath, 'utf-8');
+      products = JSON.parse(data);
+    } catch {}
+    
+    products = products.filter(p => p.id !== id);
     await fs.writeFile(dataFilePath, JSON.stringify(products, null, 2));
   }
 }

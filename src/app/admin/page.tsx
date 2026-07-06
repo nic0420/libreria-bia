@@ -1,296 +1,484 @@
 "use client";
 
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import * as xlsx from "xlsx";
-import { Upload, FileSpreadsheet, Package, AlertCircle, Save, Trash2, Edit2, Download } from "lucide-react";
+import { 
+  Package, Upload, FileSpreadsheet, AlertCircle, Save, 
+  Trash2, Edit2, Download, Plus, DollarSign, TrendingUp, 
+  ShoppingBag, X, BarChart3, Loader2, Image as ImageIcon
+} from "lucide-react";
 
-export default function AdminUploadPage() {
-  const [products, setProducts] = useState<any[]>([]);
+type Product = {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  cost: number;
+  discountPrice?: number;
+  stock: number;
+  category: string;
+  image: string;
+};
+
+export default function AdminDashboard() {
+  const [activeTab, setActiveTab] = useState<'products' | 'finance'>('products');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [editingCell, setEditingCell] = useState<{ row: number; col: string } | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Modals state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+
+  // Form state
+  const [formData, setFormData] = useState<Partial<Product>>({
+    id: '', name: '', description: '', price: 0, cost: 0, stock: 0, category: '', image: ''
+  });
+
+  // Fetch products
+  const fetchProducts = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/products');
+      if (!res.ok) throw new Error('Failed to fetch products');
+      const data = await res.json();
+      setProducts(data);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  // Form handling
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'number' ? (value ? parseFloat(value) : undefined) : value
+    }));
+  };
+
+  const handleSaveProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const isEditing = !!editingProduct;
+      const url = isEditing ? `/api/products/${formData.id}` : '/api/products/new';
+      
+      // If we don't have a specific POST for single new product, let's just use the PUT route for everything 
+      // since the db insert uses ON CONFLICT DO UPDATE.
+      const saveUrl = `/api/products/${formData.id || Date.now().toString()}`;
+
+      const res = await fetch(saveUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+           ...formData,
+           id: formData.id || Date.now().toString()
+        }),
+      });
+
+      if (!res.ok) throw new Error('Error saving product');
+      
+      await fetchProducts();
+      setIsModalOpen(false);
+      setEditingProduct(null);
+      setFormData({ id: '', name: '', description: '', price: 0, cost: 0, stock: 0, category: '', image: '' });
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  const handleDeleteProduct = async (id: string) => {
+    if (!confirm('¿Seguro que quieres eliminar este producto?')) return;
+    try {
+      const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Error deleting product');
+      await fetchProducts();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  const openEditModal = (p: Product) => {
+    setEditingProduct(p);
+    setFormData({ ...p });
+    setIsModalOpen(true);
+  };
+
+  const openNewProductModal = () => {
+    setEditingProduct(null);
+    setFormData({ id: '', name: '', description: '', price: 0, cost: 0, stock: 0, category: '', image: '' });
+    setIsModalOpen(true);
+  };
+
+  // Excel Logic
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isPublishing, setIsPublishing] = useState(false);
+  
   const handleFileUpload = (file: File) => {
     setError(null);
     const reader = new FileReader();
 
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const data = e.target?.result;
         if (!data) throw new Error("No data found");
-
         const workbook = xlsx.read(data, { type: "binary" });
         const firstSheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[firstSheetName];
-        
         const json = xlsx.utils.sheet_to_json(worksheet);
         
         if (json.length === 0) {
-          setError("El archivo Excel está vacío.");
+          alert("El archivo Excel está vacío.");
           return;
         }
 
-        setProducts(json);
-      } catch (err) {
-        console.error(err);
-        setError("Error al leer el archivo Excel. Por favor, asegúrate de que tiene un formato válido.");
+        setIsPublishing(true);
+        const res = await fetch('/api/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(json),
+        });
+
+        if (!res.ok) throw new Error('Error uploading excel data');
+        
+        await fetchProducts();
+        setIsExcelModalOpen(false);
+        alert('Productos subidos con éxito');
+      } catch (err: any) {
+        alert("Error al leer/subir el archivo: " + err.message);
+      } finally {
+        setIsPublishing(false);
       }
     };
-
-    reader.onerror = () => {
-      setError("Error al leer el archivo.");
-    };
-
     reader.readAsBinaryString(file);
   };
 
-  const onDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  }, []);
-
-  const onDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  }, []);
-
-  const onDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    
-    const file = e.dataTransfer.files?.[0];
-    if (file && (file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv'))) {
-      handleFileUpload(file);
-    } else {
-      setError("Por favor, sube un archivo Excel (.xlsx, .xls) o CSV.");
-    }
-  }, []);
-
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      handleFileUpload(file);
-    }
-  };
-
-  // Editing logic
-  const handleCellChange = (rowIndex: number, column: string, value: string) => {
-    const updatedProducts = [...products];
-    updatedProducts[rowIndex][column] = value;
-    setProducts(updatedProducts);
-  };
-
-  const handleDeleteRow = (rowIndex: number) => {
-    const updatedProducts = products.filter((_, idx) => idx !== rowIndex);
-    setProducts(updatedProducts);
-  };
-
-  const [isPublishing, setIsPublishing] = useState(false);
-
-  const handlePublishToStore = async () => {
-    if (products.length === 0) return;
-    setIsPublishing(true);
-    try {
-      const response = await fetch('/api/products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(products),
-      });
-
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        throw new Error(data?.details || data?.error || 'Error desconocido al publicar los productos');
-      }
-
-      alert('¡Productos publicados exitosamente en la tienda!');
-    } catch (err: any) {
-      console.error(err);
-      alert('Hubo un error al publicar: ' + (err.message || 'Verifica la consola.'));
-    } finally {
-      setIsPublishing(false);
-    }
-  };
-
-  const handleExportExcel = () => {
-    if (products.length === 0) return;
-    
-    const worksheet = xlsx.utils.json_to_sheet(products);
-    const workbook = xlsx.utils.book_new();
-    xlsx.utils.book_append_sheet(workbook, worksheet, "Productos");
-    
-    // Generate buffer and download
-    xlsx.writeFile(workbook, "productos_actualizados.xlsx");
-  };
-
-  // Get dynamic headers from the first row of products
-  // Even if products is empty, we might have had headers, but for now this works:
-  const headers = products.length > 0 ? Object.keys(products[0]) : [];
+  // Finance Calculations
+  const totalCapital = products.reduce((sum, p) => sum + (Number(p.cost) * Number(p.stock)), 0);
+  const potentialProfit = products.reduce((sum, p) => {
+    const salePrice = p.discountPrice || p.price;
+    return sum + ((Number(salePrice) - Number(p.cost)) * Number(p.stock));
+  }, 0);
+  const totalInventoryValue = products.reduce((sum, p) => sum + (Number(p.price) * Number(p.stock)), 0);
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="max-w-7xl mx-auto space-y-6">
         
-        <header className="flex items-center justify-between">
+        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
           <div className="flex items-center space-x-4">
-            <Package className="w-10 h-10 text-blue-600" />
-            <h1 className="text-3xl font-bold tracking-tight">Gestión de Inventario</h1>
-          </div>
-          {products.length > 0 && (
-            <div className="flex space-x-4">
-              <button
-                onClick={handleExportExcel}
-                className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors shadow-sm font-medium"
-              >
-                <Download className="w-5 h-5 mr-2" />
-                Descargar Backup Excel
-              </button>
-              <button
-                onClick={handlePublishToStore}
-                disabled={isPublishing}
-                className={`flex items-center px-4 py-2 text-white rounded-lg transition-colors shadow-sm font-medium ${isPublishing ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
-              >
-                <Save className="w-5 h-5 mr-2" />
-                {isPublishing ? 'Publicando...' : 'Publicar en la tienda'}
-              </button>
+            <Package className="w-10 h-10 text-primary-600" />
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight text-gray-900">Panel de Administración</h1>
+              <p className="text-gray-500 text-sm">Gestiona tu inventario y finanzas en un solo lugar</p>
             </div>
-          )}
+          </div>
+          
+          <div className="flex bg-gray-100 p-1 rounded-lg">
+            <button
+              onClick={() => setActiveTab('products')}
+              className={`px-4 py-2 rounded-md font-medium text-sm transition-colors flex items-center gap-2 ${activeTab === 'products' ? 'bg-white shadow-sm text-primary-600' : 'text-gray-600 hover:text-gray-900'}`}
+            >
+              <Package className="w-4 h-4" /> Inventario
+            </button>
+            <button
+              onClick={() => setActiveTab('finance')}
+              className={`px-4 py-2 rounded-md font-medium text-sm transition-colors flex items-center gap-2 ${activeTab === 'finance' ? 'bg-white shadow-sm text-primary-600' : 'text-gray-600 hover:text-gray-900'}`}
+            >
+              <BarChart3 className="w-4 h-4" /> Finanzas
+            </button>
+          </div>
         </header>
 
-        {products.length === 0 ? (
-          <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-            <h2 className="text-xl font-semibold mb-6 flex items-center">
-              <Upload className="w-5 h-5 mr-2 text-gray-500" />
-              Cargar Productos Iniciales
-            </h2>
+        {isLoading ? (
+          <div className="flex justify-center items-center py-20">
+            <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+          </div>
+        ) : (
+          <>
+            {/* INVENTORY TAB */}
+            {activeTab === 'products' && (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                  <h2 className="text-lg font-semibold flex items-center gap-2">
+                    <ShoppingBag className="w-5 h-5 text-gray-500" /> Productos ({products.length})
+                  </h2>
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={() => setIsExcelModalOpen(true)}
+                      className="flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium text-sm"
+                    >
+                      <FileSpreadsheet className="w-4 h-4 mr-2" /> Importar Excel
+                    </button>
+                    <button
+                      onClick={openNewProductModal}
+                      className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors shadow-sm font-medium text-sm"
+                    >
+                      <Plus className="w-4 h-4 mr-2" /> Nuevo Producto
+                    </button>
+                  </div>
+                </div>
 
-            <div
-              onDragOver={onDragOver}
-              onDragLeave={onDragLeave}
-              onDrop={onDrop}
-              onClick={() => fileInputRef.current?.click()}
-              className={`
-                relative border-2 border-dashed rounded-xl p-12 text-center transition-all duration-200 cursor-pointer
-                ${isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-gray-400"}
-              `}
-            >
-              <input
-                type="file"
-                ref={fileInputRef}
-                accept=".xlsx, .xls, .csv"
-                onChange={onFileChange}
-                className="hidden"
-              />
-              
-              <FileSpreadsheet className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-              <p className="text-lg font-medium text-gray-700">
-                Arrastra tu archivo Excel aquí o haz clic para seleccionar
-              </p>
-              <p className="text-sm text-gray-500 mt-2">
-                Soporta archivos .xlsx, .xls y .csv
-              </p>
-            </div>
-
-            {error && (
-              <div className="mt-4 p-4 bg-red-50 text-red-700 rounded-lg flex items-start">
-                <AlertCircle className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" />
-                <p>{error}</p>
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                      <thead className="text-xs text-gray-600 uppercase bg-gray-50 border-b border-gray-100">
+                        <tr>
+                          <th className="px-6 py-4">Producto</th>
+                          <th className="px-6 py-4">Categoría</th>
+                          <th className="px-6 py-4">Precio</th>
+                          <th className="px-6 py-4">Costo</th>
+                          <th className="px-6 py-4">Stock</th>
+                          <th className="px-6 py-4 text-right">Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {products.map((p) => (
+                          <tr key={p.id} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-6 py-3">
+                              <div className="flex items-center gap-3">
+                                {p.image && p.image !== "https://via.placeholder.com/300" ? (
+                                  <img src={p.image} alt={p.name} className="w-10 h-10 rounded object-cover border border-gray-200" />
+                                ) : (
+                                  <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center border border-gray-200">
+                                    <ImageIcon className="w-5 h-5 text-gray-400" />
+                                  </div>
+                                )}
+                                <div>
+                                  <div className="font-medium text-gray-900">{p.name}</div>
+                                  <div className="text-xs text-gray-500">ID: {p.id}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-3 text-gray-600">{p.category || '-'}</td>
+                            <td className="px-6 py-3">
+                              <div className="font-medium">${p.price}</div>
+                              {p.discountPrice && <div className="text-xs text-green-600">Oferta: ${p.discountPrice}</div>}
+                            </td>
+                            <td className="px-6 py-3 text-gray-600">${p.cost || 0}</td>
+                            <td className="px-6 py-3">
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${p.stock > 10 ? 'bg-green-100 text-green-800' : p.stock > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
+                                {p.stock} un.
+                              </span>
+                            </td>
+                            <td className="px-6 py-3 text-right">
+                              <button onClick={() => openEditModal(p)} className="p-2 text-gray-400 hover:text-blue-600 transition-colors">
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button onClick={() => handleDeleteProduct(p.id)} className="p-2 text-gray-400 hover:text-red-600 transition-colors">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                        {products.length === 0 && (
+                          <tr>
+                            <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                              No hay productos. Añade uno manualmente o importa un Excel.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
             )}
-          </section>
-        ) : (
-          <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold text-gray-800 flex items-center">
-                <Edit2 className="w-5 h-5 mr-2 text-blue-500" />
-                Editor de Productos
-              </h2>
-              <span className="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">
-                {products.length} productos
-              </span>
-            </div>
-            
-            <p className="text-sm text-gray-500 mb-4">
-              Haz clic en cualquier celda para editar su contenido. Si necesitas poner una imagen, pega directamente el link (URL) de la imagen. Al terminar, dale a "Descargar Excel Modificado".
-            </p>
-            
-            <div className="overflow-x-auto rounded-xl border border-gray-200">
-              <table className="w-full text-sm text-left">
-                <thead className="text-xs text-gray-600 uppercase bg-gray-100">
-                  <tr>
-                    {headers.map((header) => (
-                      <th key={header} className="px-6 py-4 font-bold border-b border-gray-200">
-                        {header}
-                      </th>
-                    ))}
-                    <th className="px-6 py-4 font-bold border-b border-gray-200 text-center text-red-500">
-                      Acciones
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {products.map((row, rowIndex) => (
-                    <tr key={rowIndex} className="hover:bg-gray-50 transition-colors group">
-                      {headers.map((header) => (
-                        <td 
-                          key={header} 
-                          className="px-6 py-3 whitespace-nowrap text-gray-700 cursor-text"
-                          onClick={() => setEditingCell({ row: rowIndex, col: header })}
-                        >
-                          {editingCell?.row === rowIndex && editingCell?.col === header ? (
-                            <input
-                              type="text"
-                              autoFocus
-                              className="w-full px-2 py-1 border border-blue-400 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              value={row[header] || ""}
-                              onChange={(e) => handleCellChange(rowIndex, header, e.target.value)}
-                              onBlur={() => setEditingCell(null)}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") setEditingCell(null);
-                              }}
-                            />
-                          ) : (
-                            <div className="flex items-center h-8">
-                              {/* Simple heuristic to show images if the value looks like a URL and header contains 'imag' */}
-                              {String(row[header]).startsWith('http') && header.toLowerCase().includes('imag') ? (
-                                <img src={String(row[header])} alt="preview" className="h-8 w-8 object-cover rounded shadow-sm mr-2" />
-                              ) : null}
-                              <span className="truncate max-w-[200px]">
-                                {row[header] !== undefined ? String(row[header]) : "-"}
-                              </span>
-                            </div>
-                          )}
-                        </td>
-                      ))}
-                      <td className="px-6 py-3 text-center">
-                        <button
-                          onClick={() => handleDeleteRow(rowIndex)}
-                          className="text-gray-400 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100 p-2"
-                          title="Eliminar Producto"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            
-            {/* Action to upload a new excel replacing the current one */}
-             <div className="mt-8 pt-6 border-t border-gray-100 flex justify-end">
-               <button 
-                 onClick={() => setProducts([])}
-                 className="text-sm text-gray-500 hover:text-gray-800 underline transition-colors"
-               >
-                 Cargar un archivo diferente
-               </button>
-             </div>
-          </section>
-        )}
 
+            {/* FINANCE TAB */}
+            {activeTab === 'finance' && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Capital Card */}
+                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                        <DollarSign className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-medium text-gray-500">Capital Invertido</h3>
+                        <p className="text-2xl font-bold text-gray-900">${totalCapital.toLocaleString('es-AR')}</p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500">Costo total de los productos en stock.</p>
+                  </div>
+
+                  {/* Profit Card */}
+                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="p-3 bg-green-50 text-green-600 rounded-xl">
+                        <TrendingUp className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-medium text-gray-500">Ganancia Potencial</h3>
+                        <p className="text-2xl font-bold text-gray-900">${potentialProfit.toLocaleString('es-AR')}</p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500">Ganancia estimada si se vende todo el stock.</p>
+                  </div>
+
+                  {/* Valuation Card */}
+                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="p-3 bg-purple-50 text-purple-600 rounded-xl">
+                        <Package className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-medium text-gray-500">Valor de Venta (Stock)</h3>
+                        <p className="text-2xl font-bold text-gray-900">${totalInventoryValue.toLocaleString('es-AR')}</p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500">Valor total de venta al público sin descuentos.</p>
+                  </div>
+                </div>
+
+                {/* Additional Stats */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                  <h3 className="text-lg font-semibold mb-4 border-b border-gray-100 pb-2">Resumen de Inventario</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-500">Total Productos Únicos</p>
+                      <p className="text-xl font-bold">{products.length}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Total Unidades en Stock</p>
+                      <p className="text-xl font-bold">{products.reduce((acc, p) => acc + p.stock, 0)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Categorías Activas</p>
+                      <p className="text-xl font-bold">{new Set(products.map(p => p.category).filter(Boolean)).size}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Productos sin stock</p>
+                      <p className="text-xl font-bold text-red-500">{products.filter(p => p.stock <= 0).length}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
+
+      {/* PRODUCT MODAL */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center p-6 border-b border-gray-100">
+              <h2 className="text-xl font-bold">{editingProduct ? 'Editar Producto' : 'Nuevo Producto'}</h2>
+              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleSaveProduct} className="p-6 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-gray-700">ID / Código</label>
+                  <input required name="id" value={formData.id} onChange={handleInputChange} disabled={!!editingProduct} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none disabled:bg-gray-100" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-gray-700">Nombre</label>
+                  <input required name="name" value={formData.name} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none" />
+                </div>
+                
+                <div className="space-y-1 md:col-span-2">
+                  <label className="text-sm font-medium text-gray-700">Descripción</label>
+                  <textarea name="description" value={formData.description} onChange={handleInputChange} rows={2} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none" />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-gray-700">Categoría</label>
+                  <input name="category" value={formData.category} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-gray-700">Stock</label>
+                  <input type="number" required name="stock" value={formData.stock} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none" />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-gray-700">Costo ($)</label>
+                  <input type="number" step="0.01" name="cost" value={formData.cost} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-gray-700">Precio Regular ($)</label>
+                  <input type="number" step="0.01" required name="price" value={formData.price} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-gray-700">Precio de Oferta ($) <span className="text-xs text-gray-400 font-normal">(Opcional)</span></label>
+                  <input type="number" step="0.01" name="discountPrice" value={formData.discountPrice || ''} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none" />
+                </div>
+
+                <div className="space-y-1 md:col-span-2">
+                  <label className="text-sm font-medium text-gray-700">URL de Imagen</label>
+                  <input name="image" value={formData.image} onChange={handleInputChange} placeholder="https://..." className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none" />
+                  {formData.image && formData.image.startsWith('http') && (
+                    <div className="mt-2 flex justify-center bg-gray-50 p-2 rounded border border-gray-200">
+                      <img src={formData.image} alt="Preview" className="h-32 object-contain" />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="pt-4 flex justify-end gap-3 border-t border-gray-100">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium transition-colors">
+                  Cancelar
+                </button>
+                <button type="submit" className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium transition-colors flex items-center gap-2">
+                  <Save className="w-4 h-4" /> Guardar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* EXCEL UPLOAD MODAL */}
+      {isExcelModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+            <div className="flex justify-between items-center p-6 border-b border-gray-100">
+              <h2 className="text-xl font-bold">Importar Excel</h2>
+              <button onClick={() => setIsExcelModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="p-6">
+              <div 
+                className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-primary-500 hover:bg-primary-50 cursor-pointer transition-all"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept=".xlsx, .xls, .csv"
+                  onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
+                  className="hidden"
+                />
+                <FileSpreadsheet className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="font-medium text-gray-700 mb-1">Haz clic para seleccionar archivo</p>
+                <p className="text-xs text-gray-500">Soporta .xlsx, .xls y .csv</p>
+                <p className="text-xs text-red-500 mt-4 font-medium">¡Atención! Esto reemplazará todos los productos actuales.</p>
+              </div>
+
+              {isPublishing && (
+                <div className="mt-4 flex items-center justify-center gap-2 text-primary-600">
+                  <Loader2 className="w-5 h-5 animate-spin" /> Procesando...
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
