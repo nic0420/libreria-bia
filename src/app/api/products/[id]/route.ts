@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
 import { insertProduct, deleteProduct, Product } from '@/lib/db';
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const raw = await request.json();
+    const resolvedParams = await params;
     
     const product: Product = {
-      id: params.id,
+      id: resolvedParams.id,
       name: String(raw.name || "Sin Nombre"),
       description: String(raw.description || ""),
       price: parseFloat(raw.price || 0) || 0,
@@ -25,9 +26,10 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await deleteProduct(params.id);
+    const resolvedParams = await params;
+    await deleteProduct(resolvedParams.id);
     return NextResponse.json({ message: 'Product deleted successfully' });
   } catch (error: any) {
     console.error('API Error:', error);
