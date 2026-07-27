@@ -1,9 +1,29 @@
 import { NextResponse } from 'next/server';
 import { createTable, clearProducts, insertProduct, getProducts, Product } from '@/lib/db';
 
+export function parseFormattedNumber(val: any): number {
+  if (val === null || val === undefined || val === '') return 0;
+  if (typeof val === 'number') return isNaN(val) ? 0 : val;
+  
+  let str = String(val).trim().replace(/[$]/g, '');
+  
+  if (str.includes(',') && str.includes('.')) {
+    if (str.indexOf('.') < str.indexOf(',')) {
+      str = str.replace(/\./g, '').replace(',', '.');
+    } else {
+      str = str.replace(/,/g, '');
+    }
+  } else if (str.includes(',')) {
+    str = str.replace(',', '.');
+  }
+
+  const parsed = parseFloat(str);
+  return isNaN(parsed) ? 0 : parsed;
+}
+
 export async function GET() {
   try {
-    await createTable(); // Ensure table exists
+    await createTable();
     const products = await getProducts();
     return NextResponse.json(products);
   } catch (error) {
@@ -13,28 +33,29 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const rawProducts: Record<string, string | number>[] = await request.json();
+    const rawProducts: Record<string, any>[] = await request.json();
     
-    await createTable(); // Ensure table exists
-    
-    // Clear existing products to sync with the new Excel state
+    await createTable();
     await clearProducts();
     
-    // Insert new products
     for (let i = 0; i < rawProducts.length; i++) {
       const raw = rawProducts[i];
       
-      // Flexible mapping for Spanish or different column names
+      const priceVal = parseFormattedNumber(raw.price ?? raw.Price ?? raw.precio ?? raw.Precio ?? raw['PRECIO VENTA'] ?? raw['Precio Venta'] ?? 0);
+      const costVal = parseFormattedNumber(raw.cost ?? raw.Cost ?? raw.costo ?? raw.Costo ?? raw['PRECIO COSTO'] ?? raw['Precio Costo'] ?? 0);
+      const discountVal = raw.discountPrice || raw.precioOferta || raw['Precio Oferta'] ? parseFormattedNumber(raw.discountPrice || raw.precioOferta || raw['Precio Oferta']) : undefined;
+      const stockVal = Math.floor(parseFormattedNumber(raw.stock ?? raw.Stock ?? raw.cantidad ?? raw.Cantidad ?? raw.STOCK ?? raw.Stock ?? 0));
+
       const product: Product = {
-        id: String(raw.id || raw.Id || raw.ID || raw.codigo || raw.Codigo || (i + 1)),
-        name: String(raw.name || raw.Name || raw.nombre || raw.Nombre || raw.Producto || "Sin Nombre"),
-        description: String(raw.description || raw.Description || raw.descripcion || raw.Descripcion || ""),
-        price: parseFloat(String(raw.price || raw.Price || raw.precio || raw.Precio || 0)) || 0,
-        cost: parseFloat(String(raw.cost || raw.Cost || raw.costo || raw.Costo || 0)) || 0,
-        discountPrice: raw.discountPrice || raw.precioOferta ? parseFloat(String(raw.discountPrice || raw.precioOferta)) : undefined,
-        stock: parseInt(String(raw.stock || raw.Stock || raw.cantidad || raw.Cantidad || 0)) || 0,
-        category: String(raw.category || raw.Category || raw.categoria || raw.Categoria || "General"),
-        image: String(raw.image || raw.Image || raw.imagen || raw.Imagen || "https://via.placeholder.com/300")
+        id: String(raw.id || raw.Id || raw.ID || raw.codigo || raw.Codigo || raw.CODIGO || (i + 1)),
+        name: String(raw.name || raw.Name || raw.nombre || raw.Nombre || raw.Producto || raw.PRODUCTO || "Sin Nombre"),
+        description: String(raw.description || raw.Description || raw.descripcion || raw.Descripcion || raw.DESCRIPCION || ""),
+        price: priceVal,
+        cost: costVal,
+        discountPrice: discountVal && discountVal > 0 ? discountVal : undefined,
+        stock: stockVal,
+        category: String(raw.category || raw.Category || raw.categoria || raw.Categoria || raw.CATEGORIA || "General"),
+        image: String(raw.image || raw.Image || raw.imagen || raw.Imagen || raw.IMAGEN || raw['URL Imagen'] || "https://via.placeholder.com/300")
       };
 
       await insertProduct(product);
@@ -46,4 +67,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to sync products', details: error instanceof Error ? error.message : String(error) }, { status: 500 });
   }
 }
-

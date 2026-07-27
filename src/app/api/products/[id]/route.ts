@@ -1,20 +1,23 @@
 import { NextResponse } from 'next/server';
 import { insertProduct, deleteProduct, Product } from '@/lib/db';
+import { parseFormattedNumber } from '../route';
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const raw = await request.json();
     const resolvedParams = await params;
+
+    const discountVal = raw.discountPrice ? parseFormattedNumber(raw.discountPrice) : undefined;
     
     const product: Product = {
       id: resolvedParams.id,
       name: String(raw.name || "Sin Nombre"),
       description: String(raw.description || ""),
-      price: parseFloat(raw.price || 0) || 0,
-      cost: parseFloat(raw.cost || 0) || 0,
-      discountPrice: raw.discountPrice ? parseFloat(raw.discountPrice) : undefined,
-      stock: parseInt(raw.stock || 0) || 0,
-      category: String(raw.category || ""),
+      price: parseFormattedNumber(raw.price),
+      cost: parseFormattedNumber(raw.cost),
+      discountPrice: discountVal && discountVal > 0 ? discountVal : undefined,
+      stock: Math.floor(parseFormattedNumber(raw.stock)),
+      category: String(raw.category || "General"),
       image: String(raw.image || "https://via.placeholder.com/300")
     };
 

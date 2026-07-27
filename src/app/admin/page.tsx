@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import * as xlsx from "xlsx";
 import { 
   Package, Upload, FileSpreadsheet, AlertCircle, Save, 
-  Trash2, Edit2, Download, Plus, DollarSign, TrendingUp, 
-  ShoppingBag, X, BarChart3, Loader2, Image as ImageIcon
+  Trash2, Edit2, Plus, DollarSign, TrendingUp, 
+  ShoppingBag, X, BarChart3, Loader2, Image as ImageIcon, Lock, LogOut
 } from "lucide-react";
 
 type Product = {
@@ -21,11 +21,18 @@ type Product = {
 };
 
 export default function AdminDashboard() {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [authError, setAuthError] = useState("");
+
   const [activeTab, setActiveTab] = useState<'products' | 'finance' | 'categories'>('products');
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<{id: string, name: string, slug: string}[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+
+  // Search & Filter
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState("");
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -35,11 +42,60 @@ export default function AdminDashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState<Partial<Product>>({
     id: '', name: '', description: '', price: 0, cost: 0, stock: 0, category: '', image: ''
   });
+
+  // Verify auth on mount
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    try {
+      const res = await fetch('/api/products');
+      if (res.status === 401) {
+        setIsAuthenticated(false);
+      } else {
+        setIsAuthenticated(true);
+        fetchProducts();
+      }
+    } catch {
+      setIsAuthenticated(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError("");
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: passwordInput })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setIsAuthenticated(true);
+        fetchProducts();
+      } else {
+        setAuthError(data.error || "Contraseña incorrecta");
+      }
+    } catch {
+      setAuthError("Error al iniciar sesión");
+    }
+  };
+
+  const handleLogout = async () => {
+    await fetch('/api/auth', { method: 'DELETE' });
+    setIsAuthenticated(false);
+    setPasswordInput("");
+  };
 
   // Fetch products
   const fetchProducts = async () => {
@@ -52,7 +108,7 @@ export default function AdminDashboard() {
       if (resProd.ok) setProducts(await resProd.json());
       if (resCat.ok) setCategories(await resCat.json());
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      console.error(err);
     } finally {
       setIsLoading(false);
     }
@@ -76,12 +132,36 @@ export default function AdminDashboard() {
     }
   };
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+  // Image Upload handler for Product Form
+  const handleImageFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingImage(true);
+    try {
+      const data = new FormData();
+      data.append('file', file);
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: data,
+      });
+
+      const result = await res.json();
+      if (res.ok && result.url) {
+        setFormData(prev => ({ ...prev, image: result.url }));
+      } else {
+        alert('Error al subir la imagen');
+      }
+    } catch {
+      alert('Error de conexión al subir la imagen');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
 
   // Form handling
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -92,11 +172,6 @@ export default function AdminDashboard() {
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const isEditing = !!editingProduct;
-      const url = isEditing ? `/api/products/${formData.id}` : '/api/products/new';
-      
-      // If we don't have a specific POST for single new product, let's just use the PUT route for everything 
-      // since the db insert uses ON CONFLICT DO UPDATE.
       const saveUrl = `/api/products/${formData.id || Date.now().toString()}`;
 
       const res = await fetch(saveUrl, {
@@ -108,7 +183,7 @@ export default function AdminDashboard() {
         }),
       });
 
-      if (!res.ok) throw new Error('Error saving product');
+      if (!res.ok) throw new Error('Error al guardar el producto');
       
       await fetchProducts();
       setIsModalOpen(false);
@@ -123,7 +198,7 @@ export default function AdminDashboard() {
     if (!confirm('¿Seguro que quieres eliminar este producto?')) return;
     try {
       const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Error deleting product');
+      if (!res.ok) throw new Error('Error al eliminar');
       await fetchProducts();
     } catch (err) {
       alert(err instanceof Error ? err.message : String(err));
@@ -147,7 +222,6 @@ export default function AdminDashboard() {
   const [isPublishing, setIsPublishing] = useState(false);
   
   const handleFileUpload = (file: File) => {
-    setError(null);
     const reader = new FileReader();
 
     reader.onload = async (e) => {
@@ -171,19 +245,27 @@ export default function AdminDashboard() {
           body: JSON.stringify(json),
         });
 
-        if (!res.ok) throw new Error('Error uploading excel data');
+        if (!res.ok) throw new Error('Error al subir los datos de Excel');
         
         await fetchProducts();
         setIsExcelModalOpen(false);
-        alert('Productos subidos con éxito');
+        alert('Productos actualizados e importados con éxito');
       } catch (err) {
-        alert("Error al leer/subir el archivo: " + (err instanceof Error ? err.message : String(err)));
+        alert("Error al procesar archivo: " + (err instanceof Error ? err.message : String(err)));
       } finally {
         setIsPublishing(false);
       }
     };
     reader.readAsBinaryString(file);
   };
+
+  // Filter products
+  const filteredProducts = products.filter(p => {
+    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          p.id.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCat = selectedCategoryFilter ? p.category === selectedCategoryFilter : true;
+    return matchesSearch && matchesCat;
+  });
 
   // Finance Calculations
   const totalCapital = products.reduce((sum, p) => sum + (Number(p.cost) * Number(p.stock)), 0);
@@ -196,8 +278,8 @@ export default function AdminDashboard() {
   // Pagination Logic
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-  const currentProducts = products.slice(indexOfFirstProduct, indexOfLastProduct);
-  const totalPages = Math.ceil(products.length / productsPerPage);
+  const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
+  const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
 
   const handleNextPage = () => {
     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
@@ -206,8 +288,49 @@ export default function AdminDashboard() {
     if (currentPage > 1) setCurrentPage(currentPage - 1);
   };
 
+  // Render Login Screen if not authenticated
+  if (isAuthenticated === false) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+        <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md space-y-6">
+          <div className="text-center space-y-2">
+            <div className="w-16 h-16 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center mx-auto">
+              <Lock className="w-8 h-8" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900">Acceso Administrativo</h1>
+            <p className="text-sm text-gray-500">Ingresa la contraseña para acceder al panel</p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <input
+                type="password"
+                placeholder="Contraseña"
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none text-center text-lg"
+                autoFocus
+              />
+            </div>
+
+            {authError && (
+              <p className="text-sm text-red-600 text-center font-medium bg-red-50 p-2 rounded-lg">{authError}</p>
+            )}
+
+            <button
+              type="submit"
+              className="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl transition-colors shadow-md"
+            >
+              Ingresar
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 p-8">
+    <div className="min-h-screen bg-gray-50 text-gray-900 p-4 sm:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         
         <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
@@ -219,24 +342,34 @@ export default function AdminDashboard() {
             </div>
           </div>
           
-          <div className="flex bg-gray-100 p-1 rounded-lg">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex bg-gray-100 p-1 rounded-lg">
+              <button
+                onClick={() => setActiveTab('products')}
+                className={`px-4 py-2 rounded-md font-medium text-sm transition-colors flex items-center gap-2 ${activeTab === 'products' ? 'bg-white shadow-sm text-primary-600' : 'text-gray-600 hover:text-gray-900'}`}
+              >
+                <Package className="w-4 h-4" /> Inventario
+              </button>
+              <button
+                onClick={() => setActiveTab('finance')}
+                className={`px-4 py-2 rounded-md font-medium text-sm transition-colors flex items-center gap-2 ${activeTab === 'finance' ? 'bg-white shadow-sm text-primary-600' : 'text-gray-600 hover:text-gray-900'}`}
+              >
+                <BarChart3 className="w-4 h-4" /> Finanzas
+              </button>
+              <button
+                onClick={() => setActiveTab('categories')}
+                className={`px-4 py-2 rounded-md font-medium text-sm transition-colors flex items-center gap-2 ${activeTab === 'categories' ? 'bg-white shadow-sm text-primary-600' : 'text-gray-600 hover:text-gray-900'}`}
+              >
+                <Package className="w-4 h-4" /> Categorías
+              </button>
+            </div>
+
             <button
-              onClick={() => setActiveTab('products')}
-              className={`px-4 py-2 rounded-md font-medium text-sm transition-colors flex items-center gap-2 ${activeTab === 'products' ? 'bg-white shadow-sm text-primary-600' : 'text-gray-600 hover:text-gray-900'}`}
+              onClick={handleLogout}
+              className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors ml-2"
+              title="Cerrar Sesión"
             >
-              <Package className="w-4 h-4" /> Inventario
-            </button>
-            <button
-              onClick={() => setActiveTab('finance')}
-              className={`px-4 py-2 rounded-md font-medium text-sm transition-colors flex items-center gap-2 ${activeTab === 'finance' ? 'bg-white shadow-sm text-primary-600' : 'text-gray-600 hover:text-gray-900'}`}
-            >
-              <BarChart3 className="w-4 h-4" /> Finanzas
-            </button>
-            <button
-              onClick={() => setActiveTab('categories')}
-              className={`px-4 py-2 rounded-md font-medium text-sm transition-colors flex items-center gap-2 ${activeTab === 'categories' ? 'bg-white shadow-sm text-primary-600' : 'text-gray-600 hover:text-gray-900'}`}
-            >
-              <Package className="w-4 h-4" /> Categorías
+              <LogOut className="w-5 h-5" />
             </button>
           </div>
         </header>
@@ -250,10 +383,27 @@ export default function AdminDashboard() {
             {/* INVENTORY TAB */}
             {activeTab === 'products' && (
               <div className="space-y-6">
-                <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                  <h2 className="text-lg font-semibold flex items-center gap-2">
-                    <ShoppingBag className="w-5 h-5 text-gray-500" /> Productos ({products.length})
-                  </h2>
+                <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                  <div className="flex flex-1 gap-3">
+                    <input
+                      type="text"
+                      placeholder="Buscar por nombre o ID..."
+                      value={searchTerm}
+                      onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                      className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none text-sm w-full max-w-xs"
+                    />
+                    <select
+                      value={selectedCategoryFilter}
+                      onChange={(e) => { setSelectedCategoryFilter(e.target.value); setCurrentPage(1); }}
+                      className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none text-sm"
+                    >
+                      <option value="">Todas las Categorías</option>
+                      {categories.map(c => (
+                        <option key={c.id} value={c.name}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
                   <div className="flex space-x-3">
                     <button
                       onClick={() => setIsExcelModalOpen(true)}
@@ -303,10 +453,10 @@ export default function AdminDashboard() {
                             </td>
                             <td className="px-6 py-3 text-gray-600">{p.category || '-'}</td>
                             <td className="px-6 py-3">
-                              <div className="font-medium">${p.price}</div>
-                              {p.discountPrice && <div className="text-xs text-green-600">Oferta: ${p.discountPrice}</div>}
+                              <div className="font-medium">${p.price.toLocaleString('es-AR')}</div>
+                              {p.discountPrice && <div className="text-xs text-green-600">Oferta: ${p.discountPrice.toLocaleString('es-AR')}</div>}
                             </td>
-                            <td className="px-6 py-3 text-gray-600">${p.cost || 0}</td>
+                            <td className="px-6 py-3 text-gray-600">${(p.cost || 0).toLocaleString('es-AR')}</td>
                             <td className="px-6 py-3">
                               <span className={`px-2 py-1 rounded-full text-xs font-medium ${p.stock > 10 ? 'bg-green-100 text-green-800' : p.stock > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
                                 {p.stock} un.
@@ -322,10 +472,10 @@ export default function AdminDashboard() {
                             </td>
                           </tr>
                         ))}
-                        {products.length === 0 && (
+                        {filteredProducts.length === 0 && (
                           <tr>
                             <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                              No hay productos. Añade uno manualmente o importa un Excel.
+                              No se encontraron productos. Añade uno manualmente o importa un Excel.
                             </td>
                           </tr>
                         )}
@@ -336,7 +486,7 @@ export default function AdminDashboard() {
                   {totalPages > 1 && (
                     <div className="p-4 border-t border-gray-100 flex items-center justify-between bg-gray-50">
                       <span className="text-sm text-gray-500">
-                        Mostrando {indexOfFirstProduct + 1} - {Math.min(indexOfLastProduct, products.length)} de {products.length} productos
+                        Mostrando {indexOfFirstProduct + 1} - {Math.min(indexOfLastProduct, filteredProducts.length)} de {filteredProducts.length} productos
                       </span>
                       <div className="flex space-x-2">
                         <button
@@ -367,7 +517,6 @@ export default function AdminDashboard() {
             {activeTab === 'finance' && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* Capital Card */}
                   <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <div className="flex items-center gap-4 mb-4">
                       <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
@@ -381,7 +530,6 @@ export default function AdminDashboard() {
                     <p className="text-xs text-gray-500">Costo total de los productos en stock.</p>
                   </div>
 
-                  {/* Profit Card */}
                   <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <div className="flex items-center gap-4 mb-4">
                       <div className="p-3 bg-green-50 text-green-600 rounded-xl">
@@ -395,7 +543,6 @@ export default function AdminDashboard() {
                     <p className="text-xs text-gray-500">Ganancia estimada si se vende todo el stock.</p>
                   </div>
 
-                  {/* Valuation Card */}
                   <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <div className="flex items-center gap-4 mb-4">
                       <div className="p-3 bg-purple-50 text-purple-600 rounded-xl">
@@ -410,7 +557,6 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* Additional Stats */}
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                   <h3 className="text-lg font-semibold mb-4 border-b border-gray-100 pb-2">Resumen de Inventario</h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -434,7 +580,8 @@ export default function AdminDashboard() {
                 </div>
               </div>
             )}
-             {/* CATEGORIES TAB */}
+
+            {/* CATEGORIES TAB */}
             {activeTab === 'categories' && (
               <div className="space-y-6">
                 <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
@@ -554,7 +701,7 @@ export default function AdminDashboard() {
 
                 <div className="space-y-1">
                   <label className="text-sm font-medium text-gray-700">Categoría</label>
-                  <select name="category" value={formData.category} onChange={handleInputChange as any} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none">
+                  <select name="category" value={formData.category} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none">
                     <option value="">Sin Categoría</option>
                     {categories.map(c => (
                       <option key={c.id} value={c.name}>{c.name}</option>
@@ -580,13 +727,33 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="space-y-1 md:col-span-2">
-                  <label className="text-sm font-medium text-gray-700">URL de Imagen</label>
-                  <input name="image" value={formData.image} onChange={handleInputChange} placeholder="https://..." className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none" />
-                  {formData.image && formData.image.startsWith('http') && (
-                    <div className="mt-2 flex justify-center bg-gray-50 p-2 rounded border border-gray-200">
-                      <img src={formData.image} alt="Preview" className="h-32 object-contain" />
+                  <label className="text-sm font-medium text-gray-700">Imagen del Producto</label>
+                  
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <input 
+                        name="image" 
+                        value={formData.image} 
+                        onChange={handleInputChange} 
+                        placeholder="https://... o sube una foto de tu PC/móvil" 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none text-sm" 
+                      />
+                      <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium text-sm flex items-center shrink-0 border border-gray-300">
+                        <Upload className="w-4 h-4 mr-2" /> Subir
+                        <input type="file" accept="image/*" onChange={handleImageFileUpload} className="hidden" />
+                      </label>
                     </div>
-                  )}
+
+                    {isUploadingImage && (
+                      <p className="text-xs text-primary-600 flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" /> Subiendo imagen...</p>
+                    )}
+
+                    {formData.image && (
+                      <div className="mt-2 flex justify-center bg-gray-50 p-2 rounded border border-gray-200">
+                        <img src={formData.image} alt="Preview" className="h-32 object-contain" />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -629,12 +796,12 @@ export default function AdminDashboard() {
                 <FileSpreadsheet className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <p className="font-medium text-gray-700 mb-1">Haz clic para seleccionar archivo</p>
                 <p className="text-xs text-gray-500">Soporta .xlsx, .xls y .csv</p>
-                <p className="text-xs text-red-500 mt-4 font-medium">¡Atención! Esto reemplazará todos los productos actuales.</p>
+                <p className="text-xs text-red-500 mt-4 font-medium">¡Atención! Esto actualizará o reemplazará los productos.</p>
               </div>
 
               {isPublishing && (
                 <div className="mt-4 flex items-center justify-center gap-2 text-primary-600">
-                  <Loader2 className="w-5 h-5 animate-spin" /> Procesando...
+                  <Loader2 className="w-5 h-5 animate-spin" /> Procesando productos y precios...
                 </div>
               )}
             </div>
