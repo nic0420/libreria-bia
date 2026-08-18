@@ -6,6 +6,8 @@ import { ChevronRight, MessageCircle } from "lucide-react";
 import { notFound } from "next/navigation";
 import AddToCartButton from "@/components/AddToCartButton";
 
+export const dynamic = "force-dynamic";
+
 interface ProductPageProps {
   params: Promise<{ id: string }>;
 }
