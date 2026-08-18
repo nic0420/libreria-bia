@@ -21,6 +21,14 @@ export function parseFormattedNumber(val: any): number {
   return isNaN(parsed) ? 0 : parsed;
 }
 
+function pick(raw: Record<string, any>, keys: string[]): any {
+  for (const k of keys) {
+    const v = raw[k];
+    if (v !== undefined && v !== null && v !== '') return v;
+  }
+  return undefined;
+}
+
 export async function GET() {
   try {
     await createTable();
@@ -40,23 +48,32 @@ export async function POST(request: Request) {
     
     for (let i = 0; i < rawProducts.length; i++) {
       const raw = rawProducts[i];
-      
-      const priceVal = parseFormattedNumber(raw.price ?? raw.Price ?? raw.precio ?? raw.Precio ?? raw['PRECIO VENTA'] ?? raw['Precio Venta'] ?? 0);
-      const costVal = parseFormattedNumber(raw.cost ?? raw.Cost ?? raw.costo ?? raw.Costo ?? raw['PRECIO COSTO'] ?? raw['Precio Costo'] ?? 0);
-      const discountVal = raw.discountPrice || raw.precioOferta || raw['Precio Oferta'] ? parseFormattedNumber(raw.discountPrice || raw.precioOferta || raw['Precio Oferta']) : undefined;
-      const stockVal = Math.floor(parseFormattedNumber(raw.stock ?? raw.Stock ?? raw.cantidad ?? raw.Cantidad ?? raw.STOCK ?? raw.Stock ?? 0));
+
+      const idVal = pick(raw, ['id', 'Id', 'ID', 'codigo', 'Codigo', 'CODIGO', 'código', 'Código', 'sku', 'SKU']);
+      const nameVal = pick(raw, ['name', 'Name', 'nombre', 'Nombre', 'NOMBRE', 'producto', 'Producto', 'PRODUCTO']);
+      const descVal = pick(raw, ['description', 'Description', 'descripcion', 'Descripcion', 'DESCRIPCION', 'detalle', 'Detalle', 'DETALLE']);
+      const priceVal = parseFormattedNumber(pick(raw, ['price', 'Price', 'precio', 'Precio', 'PRECIO', 'precio venta', 'Precio Venta', 'PRECIO VENTA', 'pvp', 'PVP']));
+      const costVal = parseFormattedNumber(pick(raw, ['cost', 'Cost', 'costo', 'Costo', 'COSTO', 'precio costo', 'Precio Costo', 'PRECIO COSTO', 'precio de compra', 'compra']));
+      const discountVal = pick(raw, ['discountPrice', 'precioOferta', 'Precio Oferta', 'PRECIO OFERTA', 'precio oferta', 'oferta', 'Oferta', 'OFERTA', 'descuento', 'Descuento']);
+      const stockVal = Math.floor(parseFormattedNumber(pick(raw, ['stock', 'Stock', 'STOCK', 'cantidad', 'Cantidad', 'CANTIDAD', 'unidades', 'Unidades', 'UNIDADES'])));
+      const catVal = pick(raw, ['category', 'Category', 'categoria', 'Categoria', 'CATEGORIA', 'categoría', 'Categoría', 'tipo', 'Tipo', 'TIPO']);
+      const imgVal = pick(raw, ['image', 'Image', 'imagen', 'Imagen', 'IMAGEN', 'foto', 'Foto', 'FOTO', 'url imagen', 'URL Imagen', 'url', 'URL', 'link', 'Link']);
 
       const product: Product = {
-        id: String(raw.id || raw.Id || raw.ID || raw.codigo || raw.Codigo || raw.CODIGO || (i + 1)),
-        name: String(raw.name || raw.Name || raw.nombre || raw.Nombre || raw.Producto || raw.PRODUCTO || "Sin Nombre"),
-        description: String(raw.description || raw.Description || raw.descripcion || raw.Descripcion || raw.DESCRIPCION || ""),
+        id: String(idVal || (i + 1)),
+        name: String(nameVal || "Sin Nombre"),
+        description: String(descVal || ""),
         price: priceVal,
         cost: costVal,
-        discountPrice: discountVal && discountVal > 0 ? discountVal : undefined,
+        discountPrice: discountVal ? parseFormattedNumber(discountVal) : undefined,
         stock: stockVal,
-        category: String(raw.category || raw.Category || raw.categoria || raw.Categoria || raw.CATEGORIA || "General"),
-        image: String(raw.image || raw.Image || raw.imagen || raw.Imagen || raw.IMAGEN || raw['URL Imagen'] || "https://via.placeholder.com/300")
+        category: String(catVal || "General"),
+        image: String(imgVal || "https://via.placeholder.com/300")
       };
+
+      if (product.discountPrice !== undefined && product.discountPrice <= 0) {
+        product.discountPrice = undefined;
+      }
 
       await insertProduct(product);
     }

@@ -45,7 +45,7 @@ export default function CheckoutPage() {
     }).format(price);
   };
 
-  const WHATSAPP_NUMBER = "5491100000000"; // Dummy number
+  const WHATSAPP_NUMBER = "5493794012485";
 
   const generateWhatsAppMessage = () => {
     let message = `*¡Hola Librería Bia! Quiero realizar un pedido:*\n\n`;

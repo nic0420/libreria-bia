@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import * as xlsx from "xlsx";
+import { unzipSync } from "fflate";
 import { 
   Package, Upload, FileSpreadsheet, Save, 
   Trash2, Edit2, Plus, DollarSign, TrendingUp, 
-  ShoppingBag, X, BarChart3, Loader2, Image as ImageIcon, Lock, LogOut, Search, RefreshCw, Layers
+  ShoppingBag, X, BarChart3, Loader2, Image as ImageIcon, Lock, LogOut, Search, RefreshCw, Layers, Images
 } from "lucide-react";
 
 type Product = {
@@ -19,6 +20,144 @@ type Product = {
   category: string;
   image: string;
 };
+
+// Detecta el tipo MIME de una imagen por sus primeros bytes
+function detectImageMime(bytes: Uint8Array): string {
+  if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) return "image/png";
+  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "image/jpeg";
+  if (bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46) return "image/gif";
+  if (bytes[0] === 0x42 && bytes[1] === 0x4d) return "image/bmp";
+  if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46) return "image/webp";
+  return "image/png";
+}
+
+// Convierte bytes a base64 en el navegador
+function u8ToBase64(bytes: Uint8Array): string {
+  let binary = "";
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunkSize)));
+  }
+  return btoa(binary);
+}
+
+// Redimensiona y comprime una imagen (data URL) para que sea liviana
+function compressImage(dataUrl: string, maxSize = 900, quality = 0.82): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        let { width, height } = img;
+        if (width > maxSize || height > maxSize) {
+          const ratio = Math.min(maxSize / width, maxSize / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) { resolve(dataUrl); return; }
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      } catch {
+        resolve(dataUrl);
+      }
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}
+
+// Extrae las imágenes incrustadas en un .xlsx y las asigna a cada fila de producto
+async function extractImagesFromWorkbook(arrayBuffer: ArrayBuffer, json: Record<string, any>[]): Promise<{ json: Record<string, any>[]; extracted: number }> {
+  try {
+    const files = unzipSync(new Uint8Array(arrayBuffer));
+
+    // 1) Archivos de imagen en xl/media/*
+    const media: Record<string, Uint8Array> = {};
+    Object.entries(files).forEach(([name, data]) => {
+      const m = name.match(/xl\/media\/([^/]+)$/);
+      if (m) media[m[1]] = data;
+    });
+    if (Object.keys(media).length === 0) return { json, extracted: 0 };
+
+    const decoder = new TextDecoder();
+    const parser = new DOMParser();
+
+    // 2) Relaciones de la primera hoja: rId -> drawing
+    const sheetRelPath = "xl/worksheets/_rels/sheet1.xml.rels";
+    const sheetRels = files[sheetRelPath];
+    if (!sheetRels) return { json, extracted: 0 };
+
+    const relDoc = parser.parseFromString(decoder.decode(sheetRels), "application/xml");
+    const drawingTargets: string[] = [];
+    relDoc.querySelectorAll("Relationship").forEach((rel) => {
+      const target = rel.getAttribute("Target") || "";
+      if (target.includes("drawing")) drawingTargets.push(target);
+    });
+
+    let extracted = 0;
+
+    for (const target of drawingTargets) {
+      const drawingPath = target.startsWith("/") ? target.slice(1) : `xl/${target}`;
+      const drawing = files[drawingPath];
+      if (!drawing) continue;
+
+      // Relaciones del drawing: rId -> imagen en media
+      const drawingRelsPath = drawingPath.replace(/\/drawings\/([^/]+)$/, "/drawings/_rels/$1.rels");
+      const drawingRels = files[drawingRelsPath];
+      const imgByRel: Record<string, string> = {};
+      if (drawingRels) {
+        const drelDoc = parser.parseFromString(decoder.decode(drawingRels), "application/xml");
+        drelDoc.querySelectorAll("Relationship").forEach((rel) => {
+          imgByRel[rel.getAttribute("Id") || ""] = rel.getAttribute("Target") || "";
+        });
+      }
+
+      const drawDoc = parser.parseFromString(decoder.decode(drawing), "application/xml");
+
+      // 3) Cada ancla (twoCellAnchor / oneCellAnchor) tiene fila/columna + blip con imagen
+      const anchors = drawDoc.querySelectorAll("xdr|twoCellAnchor, xdr|oneCellAnchor, xdr|absoluteAnchor");
+      for (const anchor of Array.from(anchors)) {
+        const from = anchor.querySelector("xdr|from");
+        const blip = anchor.querySelector("a|blip");
+        if (!from || !blip) continue;
+
+        const rowEl = from.querySelector("xdr|row");
+        if (!rowEl) continue;
+        const row = parseInt(rowEl.textContent || "0", 10);
+        const embed = blip.getAttribute("r:embed") || blip.getAttribute("r:id") || "";
+
+        const imgTarget = imgByRel[embed];
+        if (!imgTarget) continue;
+        const imgName = imgTarget.split("/").pop() || "";
+        const imgData = media[imgName];
+        if (!imgData) continue;
+
+        // Fila del Excel (0-based) -> índice en json (restamos la fila de encabezado)
+        const jsonIdx = row - 1;
+        if (jsonIdx < 0 || jsonIdx >= json.length) continue;
+
+        const currentImage = String(json[jsonIdx].image || "");
+        // Solo asignar si no hay URL real o es el placeholder por defecto
+        if (!currentImage || currentImage.includes("placeholder")) {
+          const mime = detectImageMime(imgData);
+          const dataUrl = `data:${mime};base64,${u8ToBase64(imgData)}`;
+          json[jsonIdx].image = await compressImage(dataUrl);
+          extracted++;
+        }
+      }
+    }
+
+    return { json, extracted };
+  } catch {
+    // No es un ZIP válido (por ej. .xls antiguo): no hay imágenes para extraer
+    return { json, extracted: 0 };
+  }
+}
 
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -229,35 +368,47 @@ export default function AdminDashboard() {
       try {
         const data = e.target?.result;
         if (!data) throw new Error("No data found");
-        const workbook = xlsx.read(data, { type: "binary" });
+        const arrayBuffer = data as ArrayBuffer;
+
+        // 1) Leer las celdas (nombres, precios, stock, etc.)
+        const workbook = xlsx.read(new Uint8Array(arrayBuffer), { type: "array" });
         const firstSheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[firstSheetName];
-        const json = xlsx.utils.sheet_to_json(worksheet);
-        
+        const json = xlsx.utils.sheet_to_json(worksheet) as Record<string, any>[];
+
         if (json.length === 0) {
           alert("El archivo Excel está vacío.");
           return;
         }
 
         setIsPublishing(true);
+
+        // 2) Extraer las imágenes incrustadas y asignarlas por fila
+        const { json: jsonWithImages, extracted } = await extractImagesFromWorkbook(arrayBuffer, json);
+
+        // 3) Enviar todo a la API
         const res = await fetch('/api/products', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(json),
+          body: JSON.stringify(jsonWithImages),
         });
 
         if (!res.ok) throw new Error('Error al subir los datos de Excel');
-        
+
         await fetchProducts();
         setIsExcelModalOpen(false);
-        alert('Productos actualizados e importados con éxito');
+        alert(
+          extracted > 0
+            ? `¡Importación exitosa! Se cargaron ${jsonWithImages.length} productos con ${extracted} imágenes desde el Excel.`
+            : `¡Importación exitosa! Se cargaron ${jsonWithImages.length} productos.`
+        );
       } catch (err) {
         alert("Error al procesar archivo: " + (err instanceof Error ? err.message : String(err)));
       } finally {
         setIsPublishing(false);
       }
     };
-    reader.readAsBinaryString(file);
+    reader.readAsArrayBuffer(file);
   };
 
   // Filter products
@@ -717,6 +868,18 @@ export default function AdminDashboard() {
                 <FileSpreadsheet className="w-10 h-10 text-zinc-400 mx-auto mb-3" />
                 <p className="font-semibold text-zinc-800 text-xs mb-1">Selecciona tu archivo de Excel</p>
                 <p className="text-[11px] text-zinc-400">Soporta formatos .xlsx, .xls y .csv</p>
+              </div>
+
+              <div className="mt-4 p-3 bg-zinc-50 border border-zinc-100 rounded-xl">
+                <p className="text-[11px] text-zinc-500 flex items-start gap-1.5">
+                  <Images className="w-3.5 h-3.5 text-zinc-400 mt-0.5 shrink-0" />
+                  <span>
+                    <span className="font-semibold text-zinc-700">Importante:</span> si tu Excel tiene fotos pegadas en las celdas (formato .xlsx), se extraen automáticamente y se asignan a cada producto. También acepta una columna con URLs de imágenes (Imagen, Foto, URL).
+                  </span>
+                </p>
+                <p className="text-[11px] text-zinc-400 mt-1.5">
+                  Columnas reconocidas: Código, Producto, Descripción, Precio, Costo, Oferta, Stock, Categoría e Imagen (en español o inglés).
+                </p>
               </div>
 
               {isPublishing && (
