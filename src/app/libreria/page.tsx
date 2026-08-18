@@ -17,7 +17,6 @@ export default async function LibreriaPage() {
     products = await getSheetProducts();
   }
 
-  // Group products by category
   const productsByCategory = products.reduce((acc, product) => {
     const cat = product.category || "Otros";
     if (!acc[cat]) {
@@ -27,50 +26,46 @@ export default async function LibreriaPage() {
     return acc;
   }, {} as Record<string, Product[]>);
 
-  // Sort categories alphabetically
   const sortedCategories = Object.keys(productsByCategory).sort();
 
   return (
-    <div className="flex flex-col bg-zinc-50 min-h-screen pb-20">
-      
-      {/* Header Banner */}
-      <div className="bg-primary-600 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-4xl font-extrabold text-white tracking-tight">Catálogo de Librería</h1>
-          <p className="mt-2 text-primary-100 max-w-2xl text-lg">
-            Explora todos nuestros productos ordenados por categoría. Encuentra exactamente lo que necesitas para tu oficina, colegio o creatividad.
-          </p>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full mt-8">
+    <div className="flex flex-col bg-zinc-50 min-h-screen pb-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full mt-6">
         
         {/* Breadcrumb */}
-        <nav className="flex text-sm text-zinc-500 mb-8 font-medium">
-          <Link href="/" className="hover:text-primary-600 transition-colors">Inicio</Link>
-          <ChevronRight className="w-4 h-4 mx-2 text-zinc-400 mt-0.5" />
-          <span className="text-zinc-900">Librería</span>
+        <nav className="flex text-[11px] text-zinc-400 mb-6 font-medium">
+          <Link href="/" className="hover:text-zinc-900 transition-colors">Inicio</Link>
+          <ChevronRight className="w-3 h-3 mx-1.5 mt-0.5" />
+          <span className="text-zinc-700">Catálogo</span>
         </nav>
 
+        {/* Título */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-zinc-900">Catálogo de Productos</h1>
+          <p className="text-xs text-zinc-400 mt-1">
+            {products.length} productos disponibles
+          </p>
+        </div>
+
         {sortedCategories.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-3xl border border-zinc-100 shadow-sm">
-            <h3 className="text-xl font-bold text-zinc-800">No hay productos disponibles</h3>
-            <p className="text-zinc-500 mt-2">Vuelve más tarde para descubrir nuestras novedades.</p>
+          <div className="text-center py-20 bg-white rounded-2xl border border-zinc-100">
+            <h3 className="text-base font-semibold text-zinc-800">No hay productos disponibles</h3>
+            <p className="text-xs text-zinc-400 mt-1">Vuelve más tarde para ver las novedades.</p>
           </div>
         ) : (
-          <div className="space-y-16">
+          <div className="space-y-12">
             {sortedCategories.map((category) => (
               <section key={category} id={category.toLowerCase().replace(/\s+/g, '-')}>
-                <div className="flex items-center justify-between mb-6 border-b border-zinc-200 pb-3">
-                  <h2 className="text-3xl font-black tracking-tight text-zinc-900 flex items-center">
+                <div className="flex items-center justify-between mb-5 border-b border-zinc-200 pb-2">
+                  <h2 className="text-lg font-bold text-zinc-900 flex items-center">
                     {category}
-                    <span className="ml-4 px-3 py-1 bg-zinc-100 text-zinc-600 text-sm rounded-full font-semibold">
+                    <span className="ml-3 px-2 py-0.5 bg-zinc-100 text-zinc-500 text-[10px] rounded-full font-semibold">
                       {productsByCategory[category].length}
                     </span>
                   </h2>
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                   {productsByCategory[category].map((product) => (
                     <ProductCard key={product.id} product={product} />
                   ))}

@@ -2,7 +2,7 @@ import { getProducts as getSheetProducts } from "@/lib/google-sheets";
 import { getProducts as getDbProducts, createTable, Product } from "@/lib/db";
 import Image from "next/image";
 import Link from "next/link";
-import { ShoppingCart, ChevronRight, Truck, ShieldCheck, Heart } from "lucide-react";
+import { ChevronRight, MessageCircle } from "lucide-react";
 import { notFound } from "next/navigation";
 import AddToCartButton from "@/components/AddToCartButton";
 
@@ -39,87 +39,151 @@ export default async function ProductPage({ params }: ProductPageProps) {
     }).format(price);
   };
 
+  const price = product.discountPrice || product.price;
+  const hasDiscount = !!product.discountPrice;
+  const outOfStock = product.stock <= 0;
+
+  const WHATSAPP_NUMBER = "5493794012485";
+  const whatsappMessage = encodeURIComponent(`Hola! Me interesa el producto: ${product.name} - ${formatPrice(price)}. ¿Está disponible?`);
+  const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappMessage}`;
+
   return (
-    <div className="min-h-screen bg-zinc-50 pb-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+    <div className="min-h-screen bg-white">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         
         {/* Breadcrumb */}
-        <nav className="flex text-sm text-zinc-500 mb-8 font-medium">
-          <Link href="/" className="hover:text-primary-600 transition-colors">Inicio</Link>
-          <ChevronRight className="w-4 h-4 mx-2 text-zinc-400 mt-0.5" />
-          <Link href="/libreria" className="hover:text-primary-600 transition-colors">Librería</Link>
-          <ChevronRight className="w-4 h-4 mx-2 text-zinc-400 mt-0.5" />
-          <span className="text-zinc-900 truncate">{product.name}</span>
+        <nav className="flex text-[11px] text-zinc-400 mb-6 font-medium">
+          <Link href="/" className="hover:text-zinc-900 transition-colors">Inicio</Link>
+          <ChevronRight className="w-3 h-3 mx-1.5 mt-0.5" />
+          <Link href="/libreria" className="hover:text-zinc-900 transition-colors">Catálogo</Link>
+          <ChevronRight className="w-3 h-3 mx-1.5 mt-0.5" />
+          <span className="text-zinc-700 truncate">{product.name}</span>
         </nav>
 
-        <div className="bg-white rounded-3xl shadow-sm border border-zinc-100 overflow-hidden">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8 md:p-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+          
+          {/* Imagen del Producto - Grande y centrada */}
+          <div className="relative aspect-square bg-zinc-50 rounded-2xl overflow-hidden border border-zinc-100">
+            <Image
+              src={product.image}
+              alt={product.name}
+              fill
+              sizes="(max-width: 768px) 100vw, 50vw"
+              className="object-contain p-4"
+              priority
+            />
+            {outOfStock && (
+              <div className="absolute top-4 left-4 bg-zinc-900 text-white text-xs font-bold px-3 py-1.5 rounded-lg uppercase tracking-wider">
+                Sin Stock
+              </div>
+            )}
+            {hasDiscount && (
+              <div className="absolute top-4 right-4 bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg">
+                Oferta
+              </div>
+            )}
+          </div>
+
+          {/* Detalles del Producto */}
+          <div className="flex flex-col">
+            {/* Categoría */}
+            {product.category && (
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">
+                {product.category}
+              </span>
+            )}
             
-            {/* Imagen del Producto */}
-            <div className="relative aspect-square bg-zinc-100 rounded-2xl overflow-hidden group">
-              <Image
-                src={product.image}
-                alt={product.name}
-                fill
-                sizes="(max-width: 768px) 100vw, 50vw"
-                className="object-cover transition-transform duration-500 group-hover:scale-105"
-                priority
-              />
-              <button className="absolute top-4 right-4 h-12 w-12 bg-white/80 backdrop-blur-md rounded-full flex items-center justify-center text-zinc-400 hover:text-red-500 transition-colors shadow-sm">
-                <Heart className="w-6 h-6" />
-              </button>
+            {/* Nombre */}
+            <h1 className="text-2xl sm:text-3xl font-bold text-zinc-900 leading-tight">
+              {product.name}
+            </h1>
+
+            {/* Precio */}
+            <div className="mt-4 flex items-baseline gap-3">
+              <span className="text-3xl font-bold text-zinc-900">
+                {formatPrice(price)}
+              </span>
+              {hasDiscount && (
+                <span className="text-base text-zinc-400 line-through">
+                  {formatPrice(product.price)}
+                </span>
+              )}
             </div>
 
-            {/* Detalles del Producto */}
-            <div className="flex flex-col justify-center">
-              <div className="mb-2">
-                <span className="px-3 py-1 bg-secondary-100 text-secondary-800 text-xs font-bold rounded-full uppercase tracking-wider">
-                  {product.category}
+            {/* Stock */}
+            <div className="mt-4">
+              {outOfStock ? (
+                <span className="text-xs font-semibold text-red-600 bg-red-50 px-3 py-1.5 rounded-lg">
+                  Sin stock disponible
                 </span>
+              ) : (
+                <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg">
+                  Stock disponible: {product.stock} unidades
+                </span>
+              )}
+            </div>
+
+            {/* Descripción */}
+            {product.description && (
+              <div className="mt-6 pt-6 border-t border-zinc-100">
+                <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-2">Descripción</h3>
+                <p className="text-sm text-zinc-600 leading-relaxed whitespace-pre-line">
+                  {product.description}
+                </p>
               </div>
+            )}
+
+            {/* Código */}
+            <div className="mt-4 pt-4 border-t border-zinc-100">
+              <span className="text-[11px] text-zinc-400">
+                Código: <span className="text-zinc-600 font-medium">{product.id}</span>
+              </span>
+            </div>
+
+            {/* Acciones */}
+            <div className="mt-8 flex flex-col gap-3">
+              {!outOfStock && <AddToCartButton product={product} />}
               
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-zinc-900 tracking-tight mt-4">
-                {product.name}
-              </h1>
-              
-              <p className="mt-4 text-4xl font-black text-primary-600">
-                {formatPrice(product.price)}
-              </p>
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full py-3.5 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-xl font-semibold text-sm transition-colors"
+              >
+                <MessageCircle className="w-4 h-4" />
+                Consultar por WhatsApp
+              </a>
+            </div>
 
-              <div className="mt-6 prose prose-zinc text-zinc-600">
-                <p className="text-lg leading-relaxed">{product.description}</p>
-              </div>
-
-              <div className="mt-8 border-t border-zinc-100 pt-8">
-                <div className="flex items-center space-x-4 mb-6">
-                  <span className="text-sm font-medium text-zinc-700">Disponibilidad:</span>
-                  <span className={`px-3 py-1 text-sm font-bold rounded-full ${product.stock > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    {product.stock > 0 ? `${product.stock} en stock` : 'Agotado'}
-                  </span>
+            {/* Info de entrega */}
+            <div className="mt-6 pt-6 border-t border-zinc-100 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center shrink-0">
+                  <span className="text-sm">🚚</span>
                 </div>
-
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <AddToCartButton product={product} />
+                <div>
+                  <p className="text-xs font-semibold text-zinc-900">Envío a coordinar</p>
+                  <p className="text-[11px] text-zinc-400">Se coordina por WhatsApp</p>
                 </div>
               </div>
-
-              <div className="mt-8 grid grid-cols-2 gap-4">
-                <div className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-50 border border-zinc-100">
-                  <Truck className="w-8 h-8 text-secondary-500" />
-                  <div>
-                    <h4 className="font-bold text-sm text-zinc-900">Envío Rápido</h4>
-                    <p className="text-xs text-zinc-500">A todo el país</p>
-                  </div>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center shrink-0">
+                  <span className="text-sm">🏪</span>
                 </div>
-                <div className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-50 border border-zinc-100">
-                  <ShieldCheck className="w-8 h-8 text-secondary-500" />
-                  <div>
-                    <h4 className="font-bold text-sm text-zinc-900">Compra Segura</h4>
-                    <p className="text-xs text-zinc-500">Garantía total</p>
-                  </div>
+                <div>
+                  <p className="text-xs font-semibold text-zinc-900">Retiro en local</p>
+                  <p className="text-[11px] text-zinc-400">Barrio San Roque Este</p>
                 </div>
               </div>
-
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center shrink-0">
+                  <span className="text-sm">💳</span>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-zinc-900">Transferencia / Efectivo</p>
+                  <p className="text-[11px] text-zinc-400">Aceptamos todos los medios de pago</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

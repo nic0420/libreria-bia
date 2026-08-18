@@ -1,96 +1,68 @@
 import Link from "next/link";
-import { Smartphone, MapPin, Mail, Phone } from "lucide-react";
+import { MapPin, Phone, Mail } from "lucide-react";
 
 export default function Footer() {
   return (
-    <footer className="border-t-4 border-secondary-400 bg-primary-600 pt-12">
-
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-4 lg:grid-cols-5 text-white">
-          <div className="lg:col-span-2">
-            <Link href="/" className="flex items-center gap-2">
-              <span className="text-2xl font-bold text-white">
-                Librería Bia
-              </span>
-            </Link>
-            <p className="mt-4 max-w-sm text-sm text-primary-100">
-              Tu espacio creativo. Encuentra los mejores artículos de librería, papelería y regalos con un toque único y especial.
+    <footer className="bg-zinc-900 border-t border-zinc-800">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          
+          {/* Marca */}
+          <div>
+            <h3 className="text-base font-bold text-white">Librería Bia</h3>
+            <p className="mt-2 text-xs text-zinc-400 max-w-xs leading-relaxed">
+              Útiles, papelería y artículos de oficina. Envíos y retiros coordinados por WhatsApp.
             </p>
-            <div className="mt-6 flex space-x-4">
-              <a
-                href="#"
-                className="rounded-full bg-primary-500 p-2 text-white transition-colors hover:bg-secondary-500 hover:text-white"
-              >
-                <Smartphone className="h-5 w-5" />
-                <span className="sr-only">Redes Sociales</span>
-              </a>
-            </div>
           </div>
 
+          {/* Links */}
           <div>
-            <h3 className="text-sm font-semibold text-white">Enlaces</h3>
-            <ul className="mt-4 space-y-3">
+            <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-3">Navegación</h4>
+            <ul className="space-y-2">
               <li>
-                <Link href="/" className="text-sm text-primary-100 transition-colors hover:text-secondary-300">
+                <Link href="/" className="text-xs text-zinc-400 hover:text-white transition-colors">
                   Inicio
                 </Link>
               </li>
               <li>
-                <Link href="#productos" className="text-sm text-primary-100 transition-colors hover:text-secondary-300">
-                  Productos
+                <Link href="/libreria" className="text-xs text-zinc-400 hover:text-white transition-colors">
+                  Catálogo
                 </Link>
               </li>
               <li>
-                <Link href="/nosotros" className="text-sm text-primary-100 transition-colors hover:text-secondary-300">
-                  Sobre Nosotros
+                <Link href="/checkout" className="text-xs text-zinc-400 hover:text-white transition-colors">
+                  Carrito
                 </Link>
               </li>
             </ul>
           </div>
 
+          {/* Contacto */}
           <div>
-            <h3 className="text-sm font-semibold text-white">Ayuda</h3>
-            <ul className="mt-4 space-y-3">
-              <li>
-                <Link href="/envios" className="text-sm text-primary-100 transition-colors hover:text-secondary-300">
-                  Envíos a domicilio
-                </Link>
+            <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-3">Contacto</h4>
+            <ul className="space-y-2.5">
+              <li className="flex items-center gap-2 text-xs text-zinc-400">
+                <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                <span>Barrio San Roque Este, Corrientes</span>
               </li>
-              <li>
-                <Link href="/puntos-de-encuentro" className="text-sm text-primary-100 transition-colors hover:text-secondary-300">
-                  Puntos de Encuentro
-                </Link>
-              </li>
-              <li>
-                <Link href="/contacto" className="text-sm text-primary-100 transition-colors hover:text-secondary-300">
-                  Contacto
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="text-sm font-semibold text-white">Contacto</h3>
-            <ul className="mt-4 space-y-3">
-              <li className="flex items-start gap-3 text-sm text-primary-100">
-                <MapPin className="h-5 w-5 shrink-0 text-secondary-400" />
-                <span>Corrientes Capital</span>
-              </li>
-              <li className="flex items-center gap-3 text-sm text-primary-100">
-                <Phone className="h-5 w-5 shrink-0 text-secondary-400" />
+              <li className="flex items-center gap-2 text-xs text-zinc-400">
+                <Phone className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                 <span>+54 9 379 401-2485</span>
               </li>
-              <li className="flex items-center gap-3 text-sm text-primary-100">
-                <Mail className="h-5 w-5 shrink-0 text-secondary-400" />
+              <li className="flex items-center gap-2 text-xs text-zinc-400">
+                <Mail className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                 <span>libreria.bia@gmail.com</span>
               </li>
             </ul>
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col items-center justify-between border-t border-primary-500 py-6 sm:flex-row">
-          <p className="text-sm text-primary-200">
+        <div className="mt-8 pt-6 border-t border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <p className="text-[11px] text-zinc-500">
             &copy; {new Date().getFullYear()} Librería Bia. Todos los derechos reservados.
+          </p>
+          <p className="text-[11px] text-zinc-600">
+            Aceptamos transferencia y efectivo
           </p>
         </div>
       </div>

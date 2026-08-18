@@ -33,38 +33,39 @@ export default function AddToCartButton({ product }: AddToCartButtonProps) {
     return (
       <button 
         disabled
-        className="flex-1 flex items-center justify-center h-14 rounded-full font-bold text-lg shadow-md bg-zinc-200 text-zinc-400 cursor-not-allowed"
+        className="w-full flex items-center justify-center py-3.5 rounded-xl font-semibold text-sm bg-zinc-100 text-zinc-400 cursor-not-allowed"
       >
-        <ShoppingCart className="w-5 h-5 mr-2" />
         Sin stock
       </button>
     );
   }
 
   return (
-    <div className="flex flex-col sm:flex-row gap-4 w-full">
-      <div className="flex items-center justify-between border-2 border-zinc-200 rounded-full h-14 px-4 bg-white sm:w-1/3">
+    <div className="flex flex-col gap-3 w-full">
+      {/* Selector de cantidad */}
+      <div className="flex items-center justify-between border border-zinc-200 rounded-xl h-11 px-3 bg-white">
         <button 
           onClick={() => setQuantity(Math.max(1, quantity - 1))}
-          className="p-2 text-zinc-400 hover:text-primary-600 transition-colors"
+          className="p-1 text-zinc-400 hover:text-zinc-900 transition-colors"
         >
-          <Minus className="w-5 h-5" />
+          <Minus className="w-4 h-4" />
         </button>
-        <span className="font-bold text-lg w-8 text-center">{quantity}</span>
+        <span className="font-semibold text-sm w-8 text-center">{quantity}</span>
         <button 
           onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-          className="p-2 text-zinc-400 hover:text-primary-600 transition-colors"
+          className="p-1 text-zinc-400 hover:text-zinc-900 transition-colors"
         >
-          <Plus className="w-5 h-5" />
+          <Plus className="w-4 h-4" />
         </button>
       </div>
 
+      {/* Botón Agregar */}
       <button 
         onClick={handleAddToCart}
-        className={`flex-1 flex items-center justify-center h-14 rounded-full font-bold text-lg transition-all shadow-md ${added ? 'bg-green-500 text-white' : 'bg-primary-600 hover:bg-primary-700 text-white hover:shadow-lg'}`}
+        className={`w-full flex items-center justify-center py-3.5 rounded-xl font-semibold text-sm transition-all ${added ? 'bg-emerald-500 text-white' : 'bg-zinc-900 hover:bg-zinc-800 text-white'}`}
       >
-        {added ? <Check className="w-5 h-5 mr-2" /> : <ShoppingCart className="w-5 h-5 mr-2" />}
-        {added ? 'Agregado' : 'Agregar al carrito'}
+        {added ? <Check className="w-4 h-4 mr-2" /> : <ShoppingCart className="w-4 h-4 mr-2" />}
+        {added ? '¡Agregado!' : 'Agregar al carrito'}
       </button>
     </div>
   );
