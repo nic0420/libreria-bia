@@ -41,10 +41,17 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const url = new URL(request.url);
+    // ?replace=1 borra todo antes de insertar (primer lote de la importación).
+    // Sin el parámetro solo hace upsert (lotes siguientes).
+    const replace = url.searchParams.get('replace') === '1';
+
     const rawProducts: Record<string, any>[] = await request.json();
     
     await createTable();
-    await clearProducts();
+    if (replace) {
+      await clearProducts();
+    }
     
     for (let i = 0; i < rawProducts.length; i++) {
       const raw = rawProducts[i];

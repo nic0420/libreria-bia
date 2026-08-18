@@ -386,21 +386,34 @@ export default function AdminDashboard() {
         // 2) Extraer las imágenes incrustadas y asignarlas por fila
         const { json: jsonWithImages, extracted } = await extractImagesFromWorkbook(arrayBuffer, json);
 
-        // 3) Enviar todo a la API
-        const res = await fetch('/api/products', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(jsonWithImages),
-        });
+        // 3) Enviar por lotes: el primero borra el stock actual, el resto hace upsert.
+        //    Así evitamos el límite de tamaño de la API en archivos grandes.
+        const CHUNK_SIZE = 10;
+        let sentCount = 0;
+        for (let i = 0; i < jsonWithImages.length; i += CHUNK_SIZE) {
+          const chunk = jsonWithImages.slice(i, i + CHUNK_SIZE);
+          const isFirst = i === 0;
+          const res = await fetch(`/api/products${isFirst ? '?replace=1' : ''}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(chunk),
+          });
 
-        if (!res.ok) throw new Error('Error al subir los datos de Excel');
+          if (!res.ok) {
+            if (res.status === 413) {
+              throw new Error('El archivo es demasiado grande. Reducí el tamaño de las fotos en el Excel (máx ~1000px por imagen) y volvé a intentar.');
+            }
+            throw new Error(`Error al subir el lote ${Math.floor(i / CHUNK_SIZE) + 1} de productos`);
+          }
+          sentCount += chunk.length;
+        }
 
         await fetchProducts();
         setIsExcelModalOpen(false);
         alert(
           extracted > 0
-            ? `¡Importación exitosa! Se cargaron ${jsonWithImages.length} productos con ${extracted} imágenes desde el Excel.`
-            : `¡Importación exitosa! Se cargaron ${jsonWithImages.length} productos.`
+            ? `¡Importación exitosa! Se cargaron ${sentCount} productos con ${extracted} imágenes desde el Excel.`
+            : `¡Importación exitosa! Se cargaron ${sentCount} productos.`
         );
       } catch (err) {
         alert("Error al procesar archivo: " + (err instanceof Error ? err.message : String(err)));

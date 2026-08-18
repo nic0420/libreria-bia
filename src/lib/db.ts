@@ -41,6 +41,14 @@ export async function createTable() {
         image TEXT
       );
     `;
+    // La tabla puede existir de antes sin algunas columnas:
+    // ADD COLUMN IF NOT EXISTS no falla y completa el esquema.
+    await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS description TEXT`;
+    await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS cost NUMERIC DEFAULT 0`;
+    await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "discountPrice" NUMERIC`;
+    await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS stock INTEGER NOT NULL DEFAULT 0`;
+    await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS category VARCHAR(255)`;
+    await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS image TEXT`;
   } else {
     await ensureDataDir();
     try {
@@ -148,6 +156,8 @@ export async function createCategoryTable() {
         slug VARCHAR(255) NOT NULL
       );
     `;
+    await sql`ALTER TABLE categories ADD COLUMN IF NOT EXISTS name VARCHAR(255) NOT NULL DEFAULT ''`;
+    await sql`ALTER TABLE categories ADD COLUMN IF NOT EXISTS slug VARCHAR(255) NOT NULL DEFAULT ''`;
   } else {
     await ensureDataDir();
     try {
