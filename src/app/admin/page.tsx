@@ -3,9 +3,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import * as xlsx from "xlsx";
 import { 
-  Package, Upload, FileSpreadsheet, AlertCircle, Save, 
+  Package, Upload, FileSpreadsheet, Save, 
   Trash2, Edit2, Plus, DollarSign, TrendingUp, 
-  ShoppingBag, X, BarChart3, Loader2, Image as ImageIcon, Lock, LogOut
+  ShoppingBag, X, BarChart3, Loader2, Image as ImageIcon, Lock, LogOut, Search, RefreshCw, Layers
 } from "lucide-react";
 
 type Product = {
@@ -56,12 +56,13 @@ export default function AdminDashboard() {
 
   const checkAuth = async () => {
     try {
-      const res = await fetch('/api/products');
-      if (res.status === 401) {
-        setIsAuthenticated(false);
-      } else {
+      const res = await fetch('/api/auth');
+      const data = await res.json();
+      if (res.ok && data.authenticated) {
         setIsAuthenticated(true);
         fetchProducts();
+      } else {
+        setIsAuthenticated(false);
       }
     } catch {
       setIsAuthenticated(false);
@@ -268,12 +269,12 @@ export default function AdminDashboard() {
   });
 
   // Finance Calculations
-  const totalCapital = products.reduce((sum, p) => sum + (Number(p.cost) * Number(p.stock)), 0);
+  const totalCapital = products.reduce((sum, p) => sum + (Number(p.cost || 0) * Number(p.stock || 0)), 0);
   const potentialProfit = products.reduce((sum, p) => {
     const salePrice = p.discountPrice || p.price;
-    return sum + ((Number(salePrice) - Number(p.cost)) * Number(p.stock));
+    return sum + ((Number(salePrice || 0) - Number(p.cost || 0)) * Number(p.stock || 0));
   }, 0);
-  const totalInventoryValue = products.reduce((sum, p) => sum + (Number(p.price) * Number(p.stock)), 0);
+  const totalInventoryValue = products.reduce((sum, p) => sum + (Number(p.price || 0) * Number(p.stock || 0)), 0);
 
   // Pagination Logic
   const indexOfLastProduct = currentPage * productsPerPage;
@@ -291,37 +292,37 @@ export default function AdminDashboard() {
   // Render Login Screen if not authenticated
   if (isAuthenticated === false) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md space-y-6">
+      <div className="min-h-screen bg-zinc-900 flex items-center justify-center p-4">
+        <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md space-y-6">
           <div className="text-center space-y-2">
-            <div className="w-16 h-16 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center mx-auto">
-              <Lock className="w-8 h-8" />
+            <div className="w-12 h-12 bg-zinc-100 text-zinc-900 rounded-xl flex items-center justify-center mx-auto border border-zinc-200">
+              <Lock className="w-6 h-6" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Acceso Administrativo</h1>
-            <p className="text-sm text-gray-500">Ingresa la contraseña para acceder al panel</p>
+            <h1 className="text-xl font-bold text-zinc-900">Panel de Control</h1>
+            <p className="text-xs text-zinc-500">Ingresa la contraseña requerida para administrar</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <input
                 type="password"
-                placeholder="Contraseña"
+                placeholder="Contraseña del panel"
                 value={passwordInput}
                 onChange={(e) => setPasswordInput(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none text-center text-lg"
+                className="w-full px-4 py-3 border border-zinc-300 rounded-xl focus:ring-2 focus:ring-zinc-900 outline-none text-center text-lg"
                 autoFocus
               />
             </div>
 
             {authError && (
-              <p className="text-sm text-red-600 text-center font-medium bg-red-50 p-2 rounded-lg">{authError}</p>
+              <p className="text-xs text-red-600 text-center font-medium bg-red-50 p-2.5 rounded-lg border border-red-100">{authError}</p>
             )}
 
             <button
               type="submit"
-              className="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl transition-colors shadow-md"
+              className="w-full py-3 bg-zinc-900 hover:bg-zinc-800 text-white font-semibold rounded-xl transition-colors shadow-sm text-sm"
             >
-              Ingresar
+              Ingresar al Panel
             </button>
           </form>
         </div>
@@ -330,72 +331,78 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 p-4 sm:p-8">
+    <div className="min-h-screen bg-zinc-50 text-zinc-900 p-4 sm:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         
-        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-          <div className="flex items-center space-x-4">
-            <Package className="w-10 h-10 text-primary-600" />
+        {/* Header Admin */}
+        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-zinc-200">
+          <div className="flex items-center space-x-3">
+            <div className="p-2.5 bg-zinc-900 text-white rounded-xl">
+              <Package className="w-6 h-6" />
+            </div>
             <div>
-              <h1 className="text-3xl font-bold tracking-tight text-gray-900">Panel de Administración</h1>
-              <p className="text-gray-500 text-sm">Gestiona tu inventario y finanzas en un solo lugar</p>
+              <h1 className="text-xl font-bold tracking-tight text-zinc-900">Gestión de Inventario</h1>
+              <p className="text-zinc-500 text-xs">Administra tus productos, precios y datos financieros</p>
             </div>
           </div>
           
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex bg-gray-100 p-1 rounded-lg">
+            <div className="flex bg-zinc-100 p-1 rounded-xl">
               <button
                 onClick={() => setActiveTab('products')}
-                className={`px-4 py-2 rounded-md font-medium text-sm transition-colors flex items-center gap-2 ${activeTab === 'products' ? 'bg-white shadow-sm text-primary-600' : 'text-gray-600 hover:text-gray-900'}`}
+                className={`px-3.5 py-1.5 rounded-lg font-medium text-xs transition-colors flex items-center gap-1.5 ${activeTab === 'products' ? 'bg-white shadow-sm text-zinc-900' : 'text-zinc-600 hover:text-zinc-900'}`}
               >
-                <Package className="w-4 h-4" /> Inventario
+                <Package className="w-3.5 h-3.5" /> Productos ({products.length})
               </button>
               <button
                 onClick={() => setActiveTab('finance')}
-                className={`px-4 py-2 rounded-md font-medium text-sm transition-colors flex items-center gap-2 ${activeTab === 'finance' ? 'bg-white shadow-sm text-primary-600' : 'text-gray-600 hover:text-gray-900'}`}
+                className={`px-3.5 py-1.5 rounded-lg font-medium text-xs transition-colors flex items-center gap-1.5 ${activeTab === 'finance' ? 'bg-white shadow-sm text-zinc-900' : 'text-zinc-600 hover:text-zinc-900'}`}
               >
-                <BarChart3 className="w-4 h-4" /> Finanzas
+                <BarChart3 className="w-3.5 h-3.5" /> Finanzas
               </button>
               <button
                 onClick={() => setActiveTab('categories')}
-                className={`px-4 py-2 rounded-md font-medium text-sm transition-colors flex items-center gap-2 ${activeTab === 'categories' ? 'bg-white shadow-sm text-primary-600' : 'text-gray-600 hover:text-gray-900'}`}
+                className={`px-3.5 py-1.5 rounded-lg font-medium text-xs transition-colors flex items-center gap-1.5 ${activeTab === 'categories' ? 'bg-white shadow-sm text-zinc-900' : 'text-zinc-600 hover:text-zinc-900'}`}
               >
-                <Package className="w-4 h-4" /> Categorías
+                <Layers className="w-3.5 h-3.5" /> Categorías
               </button>
             </div>
 
             <button
               onClick={handleLogout}
-              className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors ml-2"
+              className="p-2 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
               title="Cerrar Sesión"
             >
-              <LogOut className="w-5 h-5" />
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
         </header>
 
         {isLoading ? (
           <div className="flex justify-center items-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+            <Loader2 className="w-8 h-8 animate-spin text-zinc-900" />
           </div>
         ) : (
           <>
             {/* INVENTORY TAB */}
             {activeTab === 'products' && (
               <div className="space-y-6">
-                <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-zinc-200">
                   <div className="flex flex-1 gap-3">
-                    <input
-                      type="text"
-                      placeholder="Buscar por nombre o ID..."
-                      value={searchTerm}
-                      onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                      className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none text-sm w-full max-w-xs"
-                    />
+                    <div className="relative flex-1 max-w-xs">
+                      <Search className="w-4 h-4 absolute left-3 top-2.5 text-zinc-400" />
+                      <input
+                        type="text"
+                        placeholder="Buscar por nombre o ID..."
+                        value={searchTerm}
+                        onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                        className="pl-9 pr-3 py-2 border border-zinc-200 rounded-lg focus:ring-2 focus:ring-zinc-900 outline-none text-xs w-full"
+                      />
+                    </div>
                     <select
                       value={selectedCategoryFilter}
                       onChange={(e) => { setSelectedCategoryFilter(e.target.value); setCurrentPage(1); }}
-                      className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none text-sm"
+                      className="px-3 py-2 border border-zinc-200 rounded-lg focus:ring-2 focus:ring-zinc-900 outline-none text-xs"
                     >
                       <option value="">Todas las Categorías</option>
                       {categories.map(c => (
@@ -404,105 +411,105 @@ export default function AdminDashboard() {
                     </select>
                   </div>
 
-                  <div className="flex space-x-3">
+                  <div className="flex space-x-2">
                     <button
                       onClick={() => setIsExcelModalOpen(true)}
-                      className="flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium text-sm"
+                      className="flex items-center px-3.5 py-2 bg-zinc-100 text-zinc-800 rounded-lg hover:bg-zinc-200 transition-colors font-medium text-xs"
                     >
-                      <FileSpreadsheet className="w-4 h-4 mr-2" /> Importar Excel
+                      <FileSpreadsheet className="w-3.5 h-3.5 mr-1.5" /> Importar Excel
                     </button>
                     <button
                       onClick={openNewProductModal}
-                      className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors shadow-sm font-medium text-sm"
+                      className="flex items-center px-3.5 py-2 bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 transition-colors font-medium text-xs"
                     >
-                      <Plus className="w-4 h-4 mr-2" /> Nuevo Producto
+                      <Plus className="w-3.5 h-3.5 mr-1.5" /> Crear Producto
                     </button>
                   </div>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden">
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                      <thead className="text-xs text-gray-600 uppercase bg-gray-50 border-b border-gray-100">
+                    <table className="w-full text-xs text-left">
+                      <thead className="text-[11px] text-zinc-500 uppercase bg-zinc-50 border-b border-zinc-200">
                         <tr>
-                          <th className="px-6 py-4">Producto</th>
-                          <th className="px-6 py-4">Categoría</th>
-                          <th className="px-6 py-4">Precio</th>
-                          <th className="px-6 py-4">Costo</th>
-                          <th className="px-6 py-4">Stock</th>
-                          <th className="px-6 py-4 text-right">Acciones</th>
+                          <th className="px-5 py-3">Producto</th>
+                          <th className="px-5 py-3">Categoría</th>
+                          <th className="px-5 py-3">Precio Venta</th>
+                          <th className="px-5 py-3">Costo</th>
+                          <th className="px-5 py-3">Stock</th>
+                          <th className="px-5 py-3 text-right">Acción</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-100">
+                      <tbody className="divide-y divide-zinc-100">
                         {currentProducts.map((p) => (
-                          <tr key={p.id} className="hover:bg-gray-50 transition-colors">
-                            <td className="px-6 py-3">
+                          <tr key={p.id} className="hover:bg-zinc-50 transition-colors">
+                            <td className="px-5 py-3">
                               <div className="flex items-center gap-3">
                                 {p.image && p.image !== "https://via.placeholder.com/300" ? (
-                                  <img src={p.image} alt={p.name} className="w-10 h-10 rounded object-cover border border-gray-200" />
+                                  <img src={p.image} alt={p.name} className="w-9 h-9 rounded-lg object-cover border border-zinc-200 shrink-0" />
                                 ) : (
-                                  <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center border border-gray-200">
-                                    <ImageIcon className="w-5 h-5 text-gray-400" />
+                                  <div className="w-9 h-9 rounded-lg bg-zinc-100 flex items-center justify-center border border-zinc-200 shrink-0">
+                                    <ImageIcon className="w-4 h-4 text-zinc-400" />
                                   </div>
                                 )}
                                 <div>
-                                  <div className="font-medium text-gray-900">{p.name}</div>
-                                  <div className="text-xs text-gray-500">ID: {p.id}</div>
+                                  <div className="font-semibold text-zinc-900">{p.name}</div>
+                                  <div className="text-[10px] text-zinc-400">ID: {p.id}</div>
                                 </div>
                               </div>
                             </td>
-                            <td className="px-6 py-3 text-gray-600">{p.category || '-'}</td>
-                            <td className="px-6 py-3">
-                              <div className="font-medium">${p.price.toLocaleString('es-AR')}</div>
-                              {p.discountPrice && <div className="text-xs text-green-600">Oferta: ${p.discountPrice.toLocaleString('es-AR')}</div>}
+                            <td className="px-5 py-3 text-zinc-600">{p.category || '-'}</td>
+                            <td className="px-5 py-3">
+                              <div className="font-semibold text-zinc-900">${(p.price || 0).toLocaleString('es-AR')}</div>
+                              {p.discountPrice && <div className="text-[10px] text-emerald-600 font-medium">Oferta: ${(p.discountPrice).toLocaleString('es-AR')}</div>}
                             </td>
-                            <td className="px-6 py-3 text-gray-600">${(p.cost || 0).toLocaleString('es-AR')}</td>
-                            <td className="px-6 py-3">
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${p.stock > 10 ? 'bg-green-100 text-green-800' : p.stock > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
+                            <td className="px-5 py-3 text-zinc-500">${(p.cost || 0).toLocaleString('es-AR')}</td>
+                            <td className="px-5 py-3">
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${p.stock > 10 ? 'bg-emerald-50 text-emerald-700' : p.stock > 0 ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700'}`}>
                                 {p.stock} un.
                               </span>
                             </td>
-                            <td className="px-6 py-3 text-right">
-                              <button onClick={() => openEditModal(p)} className="p-2 text-gray-400 hover:text-blue-600 transition-colors">
-                                <Edit2 className="w-4 h-4" />
+                            <td className="px-5 py-3 text-right">
+                              <button onClick={() => openEditModal(p)} className="p-1.5 text-zinc-400 hover:text-zinc-900 transition-colors">
+                                <Edit2 className="w-3.5 h-3.5" />
                               </button>
-                              <button onClick={() => handleDeleteProduct(p.id)} className="p-2 text-gray-400 hover:text-red-600 transition-colors">
-                                <Trash2 className="w-4 h-4" />
+                              <button onClick={() => handleDeleteProduct(p.id)} className="p-1.5 text-zinc-400 hover:text-red-600 transition-colors">
+                                <Trash2 className="w-3.5 h-3.5" />
                               </button>
                             </td>
                           </tr>
                         ))}
                         {filteredProducts.length === 0 && (
                           <tr>
-                            <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                              No se encontraron productos. Añade uno manualmente o importa un Excel.
+                            <td colSpan={6} className="px-6 py-12 text-center text-zinc-500 text-xs">
+                              No hay productos registrados. Sube una planilla Excel o crea uno manualmente.
                             </td>
                           </tr>
                         )}
                       </tbody>
                     </table>
                   </div>
-                  {/* Pagination Controls */}
+
                   {totalPages > 1 && (
-                    <div className="p-4 border-t border-gray-100 flex items-center justify-between bg-gray-50">
-                      <span className="text-sm text-gray-500">
-                        Mostrando {indexOfFirstProduct + 1} - {Math.min(indexOfLastProduct, filteredProducts.length)} de {filteredProducts.length} productos
+                    <div className="p-3 border-t border-zinc-200 flex items-center justify-between bg-zinc-50 text-xs">
+                      <span className="text-zinc-500 text-[11px]">
+                        Mostrando {indexOfFirstProduct + 1} - {Math.min(indexOfLastProduct, filteredProducts.length)} de {filteredProducts.length}
                       </span>
                       <div className="flex space-x-2">
                         <button
                           onClick={handlePrevPage}
                           disabled={currentPage === 1}
-                          className="px-3 py-1 rounded-md bg-white border border-gray-200 text-sm font-medium text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+                          className="px-2.5 py-1 rounded-md bg-white border border-zinc-200 text-xs font-medium text-zinc-700 disabled:opacity-50"
                         >
                           Anterior
                         </button>
-                        <span className="px-3 py-1 text-sm font-medium text-gray-700">
-                          Página {currentPage} de {totalPages}
+                        <span className="px-2 py-1 text-xs text-zinc-600 font-medium">
+                          {currentPage} / {totalPages}
                         </span>
                         <button
                           onClick={handleNextPage}
                           disabled={currentPage === totalPages}
-                          className="px-3 py-1 rounded-md bg-white border border-gray-200 text-sm font-medium text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+                          className="px-2.5 py-1 rounded-md bg-white border border-zinc-200 text-xs font-medium text-zinc-700 disabled:opacity-50"
                         >
                           Siguiente
                         </button>
@@ -517,64 +524,39 @@ export default function AdminDashboard() {
             {activeTab === 'finance' && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
-                        <DollarSign className="w-6 h-6" />
+                  <div className="bg-white p-5 rounded-xl shadow-sm border border-zinc-200">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="p-2.5 bg-blue-50 text-blue-600 rounded-lg">
+                        <DollarSign className="w-5 h-5" />
                       </div>
                       <div>
-                        <h3 className="text-sm font-medium text-gray-500">Capital Invertido</h3>
-                        <p className="text-2xl font-bold text-gray-900">${totalCapital.toLocaleString('es-AR')}</p>
+                        <h3 className="text-xs font-medium text-zinc-500">Capital Invertido</h3>
+                        <p className="text-xl font-bold text-zinc-900">${totalCapital.toLocaleString('es-AR')}</p>
                       </div>
                     </div>
-                    <p className="text-xs text-gray-500">Costo total de los productos en stock.</p>
                   </div>
 
-                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="p-3 bg-green-50 text-green-600 rounded-xl">
-                        <TrendingUp className="w-6 h-6" />
+                  <div className="bg-white p-5 rounded-xl shadow-sm border border-zinc-200">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-lg">
+                        <TrendingUp className="w-5 h-5" />
                       </div>
                       <div>
-                        <h3 className="text-sm font-medium text-gray-500">Ganancia Potencial</h3>
-                        <p className="text-2xl font-bold text-gray-900">${potentialProfit.toLocaleString('es-AR')}</p>
+                        <h3 className="text-xs font-medium text-zinc-500">Ganancia Estimada</h3>
+                        <p className="text-xl font-bold text-zinc-900">${potentialProfit.toLocaleString('es-AR')}</p>
                       </div>
                     </div>
-                    <p className="text-xs text-gray-500">Ganancia estimada si se vende todo el stock.</p>
                   </div>
 
-                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="p-3 bg-purple-50 text-purple-600 rounded-xl">
-                        <Package className="w-6 h-6" />
+                  <div className="bg-white p-5 rounded-xl shadow-sm border border-zinc-200">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="p-2.5 bg-purple-50 text-purple-600 rounded-lg">
+                        <Package className="w-5 h-5" />
                       </div>
                       <div>
-                        <h3 className="text-sm font-medium text-gray-500">Valor de Venta (Stock)</h3>
-                        <p className="text-2xl font-bold text-gray-900">${totalInventoryValue.toLocaleString('es-AR')}</p>
+                        <h3 className="text-xs font-medium text-zinc-500">Valor Total Venta</h3>
+                        <p className="text-xl font-bold text-zinc-900">${totalInventoryValue.toLocaleString('es-AR')}</p>
                       </div>
-                    </div>
-                    <p className="text-xs text-gray-500">Valor total de venta al público sin descuentos.</p>
-                  </div>
-                </div>
-
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                  <h3 className="text-lg font-semibold mb-4 border-b border-gray-100 pb-2">Resumen de Inventario</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-500">Total Productos Únicos</p>
-                      <p className="text-xl font-bold">{products.length}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Total Unidades en Stock</p>
-                      <p className="text-xl font-bold">{products.reduce((acc, p) => acc + p.stock, 0)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Categorías Activas</p>
-                      <p className="text-xl font-bold">{new Set(products.map(p => p.category).filter(Boolean)).size}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Productos sin stock</p>
-                      <p className="text-xl font-bold text-red-500">{products.filter(p => p.stock <= 0).length}</p>
                     </div>
                   </div>
                 </div>
@@ -584,85 +566,33 @@ export default function AdminDashboard() {
             {/* CATEGORIES TAB */}
             {activeTab === 'categories' && (
               <div className="space-y-6">
-                <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                  <h2 className="text-lg font-semibold flex items-center gap-2">
-                    <Package className="w-5 h-5 text-gray-500" /> Gestionar Categorías ({categories.length})
-                  </h2>
-                  <div className="flex space-x-3">
+                <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-zinc-200">
+                  <h2 className="text-sm font-semibold text-zinc-900">Categorías ({categories.length})</h2>
+                  <div className="flex space-x-2">
                     <button
                       onClick={handleAutoCategorize}
-                      className="flex items-center px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors font-medium text-sm"
+                      className="flex items-center px-3 py-1.5 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors font-medium text-xs"
                     >
-                      <Package className="w-4 h-4 mr-2" /> Categorización Automática
-                    </button>
-                    <button
-                      onClick={() => {
-                        const name = prompt('Nombre de la nueva categoría:');
-                        if (name) {
-                           fetch('/api/categories', {
-                             method: 'POST',
-                             body: JSON.stringify({ name }),
-                             headers: { 'Content-Type': 'application/json' }
-                           }).then(() => fetchProducts());
-                        }
-                      }}
-                      className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors shadow-sm font-medium text-sm"
-                    >
-                      <Plus className="w-4 h-4 mr-2" /> Nueva Categoría
+                      <RefreshCw className="w-3.5 h-3.5 mr-1.5" /> Auto Categorizar
                     </button>
                   </div>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                  <table className="w-full text-sm text-left">
-                    <thead className="text-xs text-gray-600 uppercase bg-gray-50 border-b border-gray-100">
+                <div className="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden">
+                  <table className="w-full text-xs text-left">
+                    <thead className="text-[11px] text-zinc-500 uppercase bg-zinc-50 border-b border-zinc-200">
                       <tr>
-                        <th className="px-6 py-4">Nombre</th>
-                        <th className="px-6 py-4">Slug</th>
-                        <th className="px-6 py-4 text-right">Acciones</th>
+                        <th className="px-5 py-3">Nombre</th>
+                        <th className="px-5 py-3">Slug</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100">
+                    <tbody className="divide-y divide-zinc-100">
                       {categories.map((c) => (
-                        <tr key={c.id} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-6 py-3 font-medium text-gray-900">{c.name}</td>
-                          <td className="px-6 py-3 text-gray-600">{c.slug}</td>
-                          <td className="px-6 py-3 text-right">
-                            <button 
-                              onClick={() => {
-                                const name = prompt('Editar nombre de categoría:', c.name);
-                                if (name) {
-                                  fetch(`/api/categories/${c.id}`, {
-                                    method: 'PUT',
-                                    body: JSON.stringify({ name }),
-                                    headers: { 'Content-Type': 'application/json' }
-                                  }).then(() => fetchProducts());
-                                }
-                              }} 
-                              className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                            <button 
-                              onClick={() => {
-                                if (confirm('¿Seguro que quieres eliminar esta categoría?')) {
-                                  fetch(`/api/categories/${c.id}`, { method: 'DELETE' }).then(() => fetchProducts());
-                                }
-                              }}
-                              className="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </td>
+                        <tr key={c.id} className="hover:bg-zinc-50">
+                          <td className="px-5 py-3 font-medium text-zinc-900">{c.name}</td>
+                          <td className="px-5 py-3 text-zinc-500">{c.slug}</td>
                         </tr>
                       ))}
-                      {categories.length === 0 && (
-                        <tr>
-                          <td colSpan={3} className="px-6 py-12 text-center text-gray-500">
-                            No hay categorías. Añade una para empezar.
-                          </td>
-                        </tr>
-                      )}
                     </tbody>
                   </table>
                 </div>
@@ -672,97 +602,88 @@ export default function AdminDashboard() {
         )}
       </div>
 
-      {/* PRODUCT MODAL */}
+      {/* PRODUCT MODAL EDIT / NEW */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center p-6 border-b border-gray-100">
-              <h2 className="text-xl font-bold">{editingProduct ? 'Editar Producto' : 'Nuevo Producto'}</h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
-                <X className="w-6 h-6" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center p-5 border-b border-zinc-200">
+              <h2 className="text-base font-bold text-zinc-900">{editingProduct ? 'Editar Producto' : 'Crear Producto'}</h2>
+              <button onClick={() => setIsModalOpen(false)} className="text-zinc-400 hover:text-zinc-600">
+                <X className="w-5 h-5" />
               </button>
             </div>
             
-            <form onSubmit={handleSaveProduct} className="p-6 space-y-4">
+            <form onSubmit={handleSaveProduct} className="p-5 space-y-4 text-xs">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-gray-700">ID / Código</label>
-                  <input required name="id" value={formData.id} onChange={handleInputChange} disabled={!!editingProduct} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none disabled:bg-gray-100" />
+                <div>
+                  <label className="block font-medium text-zinc-700 mb-1">Código / ID</label>
+                  <input required name="id" value={formData.id} onChange={handleInputChange} disabled={!!editingProduct} className="w-full px-3 py-2 border border-zinc-200 rounded-lg outline-none disabled:bg-zinc-100 text-xs" />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-gray-700">Nombre</label>
-                  <input required name="name" value={formData.name} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none" />
+                <div>
+                  <label className="block font-medium text-zinc-700 mb-1">Nombre</label>
+                  <input required name="name" value={formData.name} onChange={handleInputChange} className="w-full px-3 py-2 border border-zinc-200 rounded-lg outline-none text-xs" />
                 </div>
                 
-                <div className="space-y-1 md:col-span-2">
-                  <label className="text-sm font-medium text-gray-700">Descripción</label>
-                  <textarea name="description" value={formData.description} onChange={handleInputChange} rows={2} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none" />
+                <div className="md:col-span-2">
+                  <label className="block font-medium text-zinc-700 mb-1">Descripción</label>
+                  <textarea name="description" value={formData.description} onChange={handleInputChange} rows={2} className="w-full px-3 py-2 border border-zinc-200 rounded-lg outline-none text-xs" />
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-gray-700">Categoría</label>
-                  <select name="category" value={formData.category} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none">
+                <div>
+                  <label className="block font-medium text-zinc-700 mb-1">Categoría</label>
+                  <select name="category" value={formData.category} onChange={handleInputChange} className="w-full px-3 py-2 border border-zinc-200 rounded-lg outline-none text-xs">
                     <option value="">Sin Categoría</option>
                     {categories.map(c => (
                       <option key={c.id} value={c.name}>{c.name}</option>
                     ))}
                   </select>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-gray-700">Stock</label>
-                  <input type="number" required name="stock" value={formData.stock} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none" />
+                <div>
+                  <label className="block font-medium text-zinc-700 mb-1">Stock (Unidades)</label>
+                  <input type="number" required name="stock" value={formData.stock} onChange={handleInputChange} className="w-full px-3 py-2 border border-zinc-200 rounded-lg outline-none text-xs" />
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-gray-700">Costo ($)</label>
-                  <input type="number" step="0.01" name="cost" value={formData.cost} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none" />
+                <div>
+                  <label className="block font-medium text-zinc-700 mb-1">Costo ($)</label>
+                  <input type="number" step="0.01" name="cost" value={formData.cost} onChange={handleInputChange} className="w-full px-3 py-2 border border-zinc-200 rounded-lg outline-none text-xs" />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-gray-700">Precio Regular ($)</label>
-                  <input type="number" step="0.01" required name="price" value={formData.price} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-gray-700">Precio de Oferta ($) <span className="text-xs text-gray-400 font-normal">(Opcional)</span></label>
-                  <input type="number" step="0.01" name="discountPrice" value={formData.discountPrice || ''} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none" />
+                <div>
+                  <label className="block font-medium text-zinc-700 mb-1">Precio Venta ($)</label>
+                  <input type="number" step="0.01" required name="price" value={formData.price} onChange={handleInputChange} className="w-full px-3 py-2 border border-zinc-200 rounded-lg outline-none text-xs" />
                 </div>
 
-                <div className="space-y-1 md:col-span-2">
-                  <label className="text-sm font-medium text-gray-700">Imagen del Producto</label>
-                  
-                  <div className="space-y-2">
-                    <div className="flex gap-2">
-                      <input 
-                        name="image" 
-                        value={formData.image} 
-                        onChange={handleInputChange} 
-                        placeholder="https://... o sube una foto de tu PC/móvil" 
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none text-sm" 
-                      />
-                      <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium text-sm flex items-center shrink-0 border border-gray-300">
-                        <Upload className="w-4 h-4 mr-2" /> Subir
-                        <input type="file" accept="image/*" onChange={handleImageFileUpload} className="hidden" />
-                      </label>
-                    </div>
-
-                    {isUploadingImage && (
-                      <p className="text-xs text-primary-600 flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" /> Subiendo imagen...</p>
-                    )}
-
-                    {formData.image && (
-                      <div className="mt-2 flex justify-center bg-gray-50 p-2 rounded border border-gray-200">
-                        <img src={formData.image} alt="Preview" className="h-32 object-contain" />
-                      </div>
-                    )}
+                <div className="md:col-span-2">
+                  <label className="block font-medium text-zinc-700 mb-1">Imagen (URL o archivo local)</label>
+                  <div className="flex gap-2 mb-2">
+                    <input 
+                      name="image" 
+                      value={formData.image} 
+                      onChange={handleInputChange} 
+                      placeholder="URL o sube una foto de tu PC" 
+                      className="w-full px-3 py-2 border border-zinc-200 rounded-lg outline-none text-xs" 
+                    />
+                    <label className="cursor-pointer bg-zinc-100 hover:bg-zinc-200 text-zinc-800 px-3 py-2 rounded-lg font-medium text-xs flex items-center shrink-0 border border-zinc-200">
+                      <Upload className="w-3.5 h-3.5 mr-1" /> Subir
+                      <input type="file" accept="image/*" onChange={handleImageFileUpload} className="hidden" />
+                    </label>
                   </div>
+
+                  {isUploadingImage && <p className="text-[11px] text-zinc-500">Subiendo archivo de imagen...</p>}
+
+                  {formData.image && (
+                    <div className="mt-2 flex justify-center bg-zinc-50 p-2 rounded-lg border border-zinc-200">
+                      <img src={formData.image} alt="Preview" className="h-28 object-contain" />
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div className="pt-4 flex justify-end gap-3 border-t border-gray-100">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium transition-colors">
+              <div className="pt-3 flex justify-end gap-2 border-t border-zinc-200">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-3.5 py-2 text-zinc-600 hover:bg-zinc-100 rounded-lg font-medium text-xs">
                   Cancelar
                 </button>
-                <button type="submit" className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium transition-colors flex items-center gap-2">
-                  <Save className="w-4 h-4" /> Guardar
+                <button type="submit" className="px-4 py-2 bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 font-medium text-xs flex items-center gap-1.5">
+                  <Save className="w-3.5 h-3.5" /> Guardar Producto
                 </button>
               </div>
             </form>
@@ -772,18 +693,18 @@ export default function AdminDashboard() {
 
       {/* EXCEL UPLOAD MODAL */}
       {isExcelModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
-            <div className="flex justify-between items-center p-6 border-b border-gray-100">
-              <h2 className="text-xl font-bold">Importar Excel</h2>
-              <button onClick={() => setIsExcelModalOpen(false)} className="text-gray-400 hover:text-gray-600">
-                <X className="w-6 h-6" />
+            <div className="flex justify-between items-center p-5 border-b border-zinc-200">
+              <h2 className="text-base font-bold text-zinc-900">Importar Excel de Productos</h2>
+              <button onClick={() => setIsExcelModalOpen(false)} className="text-zinc-400 hover:text-zinc-600">
+                <X className="w-5 h-5" />
               </button>
             </div>
             
             <div className="p-6">
               <div 
-                className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-primary-500 hover:bg-primary-50 cursor-pointer transition-all"
+                className="border-2 border-dashed border-zinc-300 rounded-2xl p-8 text-center hover:border-zinc-800 hover:bg-zinc-50 cursor-pointer transition-all"
                 onClick={() => fileInputRef.current?.click()}
               >
                 <input
@@ -793,15 +714,14 @@ export default function AdminDashboard() {
                   onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
                   className="hidden"
                 />
-                <FileSpreadsheet className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="font-medium text-gray-700 mb-1">Haz clic para seleccionar archivo</p>
-                <p className="text-xs text-gray-500">Soporta .xlsx, .xls y .csv</p>
-                <p className="text-xs text-red-500 mt-4 font-medium">¡Atención! Esto actualizará o reemplazará los productos.</p>
+                <FileSpreadsheet className="w-10 h-10 text-zinc-400 mx-auto mb-3" />
+                <p className="font-semibold text-zinc-800 text-xs mb-1">Selecciona tu archivo de Excel</p>
+                <p className="text-[11px] text-zinc-400">Soporta formatos .xlsx, .xls y .csv</p>
               </div>
 
               {isPublishing && (
-                <div className="mt-4 flex items-center justify-center gap-2 text-primary-600">
-                  <Loader2 className="w-5 h-5 animate-spin" /> Procesando productos y precios...
+                <div className="mt-4 flex items-center justify-center gap-2 text-zinc-800 text-xs font-medium">
+                  <Loader2 className="w-4 h-4 animate-spin" /> Procesando planilla e importando datos...
                 </div>
               )}
             </div>

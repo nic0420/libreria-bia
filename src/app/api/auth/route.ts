@@ -1,4 +1,14 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+
+export async function GET() {
+  const cookieStore = await cookies();
+  const auth = cookieStore.get('admin_auth')?.value;
+  if (auth === 'authenticated') {
+    return NextResponse.json({ authenticated: true });
+  }
+  return NextResponse.json({ authenticated: false }, { status: 401 });
+}
 
 export async function POST(request: Request) {
   try {
@@ -7,7 +17,6 @@ export async function POST(request: Request) {
 
     if (password === ADMIN_PASSWORD) {
       const response = NextResponse.json({ success: true });
-      // Set secure cookie
       response.cookies.set('admin_auth', 'authenticated', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
