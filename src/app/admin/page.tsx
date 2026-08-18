@@ -345,6 +345,22 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleDeleteAllProducts = async () => {
+    if (!confirm('¿Seguro que querés eliminar TODOS los productos del inventario? Esta acción no se puede deshacer.')) return;
+    if (!confirm('Última confirmación: se borrarán definitivamente todos los productos y su stock. ¿Continuar?')) return;
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/products', { method: 'DELETE' });
+      if (!res.ok) throw new Error('Error al vaciar el inventario');
+      await fetchProducts();
+      alert('Inventario vaciado correctamente. Ya podés importar un nuevo Excel.');
+    } catch (err) {
+      alert(err instanceof Error ? err.message : String(err));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const openEditModal = (p: Product) => {
     setEditingProduct(p);
     setFormData({ ...p });
@@ -588,6 +604,15 @@ export default function AdminDashboard() {
                     >
                       <Plus className="w-3.5 h-3.5 mr-1.5" /> Crear Producto
                     </button>
+                    {products.length > 0 && (
+                      <button
+                        onClick={handleDeleteAllProducts}
+                        className="flex items-center px-3.5 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors font-medium text-xs border border-red-100"
+                        title="Elimina todos los productos del inventario"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Vaciar Inventario
+                      </button>
+                    )}
                   </div>
                 </div>
 

@@ -39,6 +39,16 @@ export async function GET() {
   }
 }
 
+export async function DELETE() {
+  try {
+    await createTable();
+    await clearProducts();
+    return NextResponse.json({ message: 'All products deleted successfully' });
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to clear products' }, { status: 500 });
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const url = new URL(request.url);
