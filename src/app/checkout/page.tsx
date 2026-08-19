@@ -72,12 +72,17 @@ export default function CheckoutPage() {
 
     message += `*💳 Método de Pago:*\n`;
     if (paymentMethod === 'mercadopago') {
-      message += `Mercado Pago (Transferiré al alias)\n`;
+      message += `Mercado Pago\n`;
+      message += `Alias: toledobianca2\n`;
+      message += `A nombre de: Bianca Irina Toledo\n`;
     } else if (paymentMethod === 'wallet') {
-      message += `Otra Billetera Virtual (Transferiré al CBU/Alias)\n`;
+      message += `Transferencia Bancaria\n`;
+      message += `Alias: toledobianca2\n`;
+      message += `A nombre de: Bianca Irina Toledo\n`;
     } else {
       message += `Efectivo (Al retirar/entregar)\n`;
     }
+    message += `\n*📎 Por favor, enviá el comprobante de transferencia a este mismo número de WhatsApp.*\n`;
 
     if (formData.notes) {
       message += `\n*Nota extra:* ${formData.notes}\n`;
@@ -184,7 +189,8 @@ export default function CheckoutPage() {
                   <div className="flex-1 flex items-center justify-between">
                     <div>
                       <span className="font-bold block">Mercado Pago</span>
-                      <span className="text-sm text-zinc-500">Transferencia al Alias (ALIAS.MERCADOPAGO)</span>
+                      <span className="text-sm text-zinc-500">Alias: <span className="font-semibold text-primary-600">toledobianca2</span></span>
+                      <span className="text-xs text-zinc-400 block">A nombre de Bianca Irina Toledo</span>
                     </div>
                     <CreditCard className={`w-6 h-6 ${paymentMethod === 'mercadopago' ? 'text-primary-600' : 'text-zinc-400'}`} />
                   </div>
@@ -194,8 +200,9 @@ export default function CheckoutPage() {
                   <input type="radio" name="payment" value="wallet" checked={paymentMethod === 'wallet'} onChange={() => setPaymentMethod('wallet')} className="w-5 h-5 text-primary-600 focus:ring-primary-500" />
                   <div className="flex-1 flex items-center justify-between">
                     <div>
-                      <span className="font-bold block">Otras Billeteras Virtuales</span>
-                      <span className="text-sm text-zinc-500">Transferencia bancaria / CBU (ALIAS.BILLETERA)</span>
+                      <span className="font-bold block">Transferencia Bancaria</span>
+                      <span className="text-sm text-zinc-500">Alias: <span className="font-semibold text-primary-600">toledobianca2</span></span>
+                      <span className="text-xs text-zinc-400 block">A nombre de Bianca Irina Toledo</span>
                     </div>
                     <Wallet className={`w-6 h-6 ${paymentMethod === 'wallet' ? 'text-primary-600' : 'text-zinc-400'}`} />
                   </div>
