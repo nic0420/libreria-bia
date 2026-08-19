@@ -1,5 +1,4 @@
-import { getProducts as getSheetProducts } from "@/lib/google-sheets";
-import { getProducts as getDbProducts, createTable, Product } from "@/lib/db";
+import { getProductById as getDbProductById, createTable } from "@/lib/db";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronRight, MessageCircle } from "lucide-react";
@@ -15,19 +14,13 @@ interface ProductPageProps {
 export default async function ProductPage({ params }: ProductPageProps) {
   const { id } = await params;
   
-  let products: Product[] = [];
+  let product = null;
   try {
     await createTable();
-    products = await getDbProducts();
+    product = await getDbProductById(id);
   } catch (e) {
-    console.log("No DB configured, falling back to Google Sheets");
+    console.log("No DB configured");
   }
-
-  if (products.length === 0) {
-    products = await getSheetProducts();
-  }
-
-  const product = products.find((p) => p.id === id);
 
   if (!product) {
     notFound();
@@ -41,8 +34,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
     }).format(price);
   };
 
-  const price = product.discountPrice || product.price;
-  const hasDiscount = !!product.discountPrice;
+  const price = product.discountPrice ?? product.price;
+  const hasDiscount = product.discountPrice != null;
   const outOfStock = product.stock <= 0;
 
   const WHATSAPP_NUMBER = "5493794012485";

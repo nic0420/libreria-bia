@@ -46,7 +46,7 @@ export default function CartPage() {
             {/* Lista de productos */}
             <div className="flex-1 space-y-3">
               {items.map((item) => (
-                <div key={item.id} className="bg-white rounded-xl p-4 border border-blue-100 flex items-center gap-4">
+                <div key={`${item.id}-${item.selectedColor || ''}`} className="bg-white rounded-xl p-4 border border-blue-100 flex items-center gap-4">
                   <div className="relative w-20 h-20 rounded-lg overflow-hidden bg-blue-50/50 shrink-0 border border-blue-100">
                     <Image src={item.image} alt={item.name} fill className="object-cover" />
                   </div>
@@ -67,7 +67,8 @@ export default function CartPage() {
                     <div className="flex items-center border border-blue-200 rounded-lg h-8 px-1">
                       <button 
                         onClick={() => updateQuantity(item.id, item.quantity - 1, item.selectedColor)}
-                        className="p-1 text-blue-400 hover:text-blue-700 transition-colors"
+                        disabled={item.quantity <= 1}
+                        className="p-1 text-blue-400 hover:text-blue-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                       >
                         <Minus className="w-3.5 h-3.5" />
                       </button>

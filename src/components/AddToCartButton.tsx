@@ -24,7 +24,7 @@ export default function AddToCartButton({ product }: AddToCartButtonProps) {
     ? colorAttr.values.find((v) => v.value === selectedColor)
     : null;
 
-  const price = selectedVariant?.price || product.discountPrice || product.price;
+  const price = selectedVariant?.price ?? product.discountPrice ?? product.price;
   const stock = selectedVariant?.stock ?? product.stock;
   const outOfStock = stock <= 0;
 

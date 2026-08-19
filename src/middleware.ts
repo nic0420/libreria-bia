@@ -6,7 +6,7 @@ export function middleware(request: NextRequest) {
 
   // Protect /admin route and admin API endpoints (POST/PUT/DELETE)
   const isAdminPage = path.startsWith('/admin');
-  const isAdminApi = (path.startsWith('/api/products') || path.startsWith('/api/categories') || path.startsWith('/api/categorize-run')) && request.method !== 'GET';
+  const isAdminApi = (path.startsWith('/api/products') || path.startsWith('/api/categories') || path.startsWith('/api/categorize-run') || path.startsWith('/api/upload')) && request.method !== 'GET';
 
   const authCookie = request.cookies.get('admin_auth')?.value;
   const isAuthenticated = authCookie === 'authenticated';
@@ -15,6 +15,7 @@ export function middleware(request: NextRequest) {
     if (isAdminApi) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
+    return NextResponse.redirect(new URL('/admin/login', request.url));
   }
 
   return NextResponse.next();

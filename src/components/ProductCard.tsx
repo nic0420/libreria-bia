@@ -25,8 +25,8 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [added, setAdded] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
 
-  const price = product.discountPrice || product.price;
-  const hasDiscount = !!product.discountPrice;
+  const price = product.discountPrice ?? product.price;
+  const hasDiscount = product.discountPrice != null;
   const outOfStock = product.stock <= 0;
 
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -79,12 +79,11 @@ export default function ProductCard({ product }: ProductCardProps) {
         {/* Overlay de acciones al hacer hover */}
         <div className="absolute inset-0 bg-black/0 group-hover:bg-blue-900/10 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
           <div className="flex gap-2">
-            <Link
-              href={`/producto/${product.id}`}
-              className="bg-white hover:bg-blue-50 text-blue-700 p-2.5 rounded-lg shadow-lg transition-all flex items-center gap-1.5 text-xs font-semibold"
+            <span
+              className="bg-white hover:bg-blue-50 text-blue-700 p-2.5 rounded-lg shadow-lg transition-all flex items-center gap-1.5 text-xs font-semibold cursor-pointer"
             >
               <Eye className="w-3.5 h-3.5" /> Ver detalle
-            </Link>
+            </span>
             {!outOfStock && (
               <button
                 onClick={handleAddToCart}

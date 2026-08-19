@@ -87,7 +87,8 @@ const COLOR_MAP: Record<string, string> = {
 export function getColorHex(colorName: string): string {
   const key = colorName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   if (COLOR_MAP[key]) return COLOR_MAP[key];
-  for (const [k, v] of Object.entries(COLOR_MAP)) {
+  const sorted = Object.entries(COLOR_MAP).sort((a, b) => b[0].length - a[0].length);
+  for (const [k, v] of sorted) {
     if (key.includes(k) || k.includes(key)) return v;
   }
   return "#94A3B8";

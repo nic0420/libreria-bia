@@ -96,11 +96,8 @@ export default function CheckoutPage() {
     const message = generateWhatsAppMessage();
     const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
     
-    // Clear cart (optional, maybe clear only after successful return? Let's clear it now since we send them to WA)
-    clearCart();
-    
-    // Open WA in new tab
     window.open(whatsappUrl, '_blank');
+    clearCart();
     router.push('/');
   };
 
@@ -234,7 +231,7 @@ export default function CheckoutPage() {
               
               <div className="space-y-4 mb-6 max-h-[40vh] overflow-y-auto pr-2">
                 {items.map(item => (
-                  <div key={item.id} className="flex gap-3">
+                  <div key={`${item.id}-${item.selectedColor || ''}`} className="flex gap-3">
                     <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-zinc-100 shrink-0">
                       <Image src={item.image} alt={item.name} fill className="object-cover" />
                       <div className="absolute -top-1 -right-1 bg-zinc-800 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold">

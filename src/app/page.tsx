@@ -50,7 +50,7 @@ export default async function Home() {
                     <div className="mt-2 px-1">
                       <h3 className="text-xs font-medium text-blue-900/80 line-clamp-2 leading-snug">{product.name}</h3>
                       <p className="text-sm font-bold text-blue-700 mt-1">
-                        {new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(product.discountPrice || product.price)}
+                        {new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(product.discountPrice ?? product.price)}
                       </p>
                     </div>
                   </Link>

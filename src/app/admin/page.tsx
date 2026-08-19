@@ -451,7 +451,7 @@ export default function AdminDashboard() {
   // Finance Calculations
   const totalCapital = products.reduce((sum, p) => sum + (Number(p.cost || 0) * Number(p.stock || 0)), 0);
   const potentialProfit = products.reduce((sum, p) => {
-    const salePrice = p.discountPrice || p.price;
+    const salePrice = p.discountPrice ?? p.price;
     return sum + ((Number(salePrice || 0) - Number(p.cost || 0)) * Number(p.stock || 0));
   }, 0);
   const totalInventoryValue = products.reduce((sum, p) => sum + (Number(p.price || 0) * Number(p.stock || 0)), 0);
@@ -650,7 +650,7 @@ export default function AdminDashboard() {
                             <td className="px-5 py-3 text-zinc-600">{p.category || '-'}</td>
                             <td className="px-5 py-3">
                               <div className="font-semibold text-zinc-900">${(p.price || 0).toLocaleString('es-AR')}</div>
-                              {p.discountPrice && <div className="text-[10px] text-emerald-600 font-medium">Oferta: ${(p.discountPrice).toLocaleString('es-AR')}</div>}
+                              {p.discountPrice != null && <div className="text-[10px] text-emerald-600 font-medium">Oferta: ${(p.discountPrice).toLocaleString('es-AR')}</div>}
                             </td>
                             <td className="px-5 py-3 text-zinc-500">${(p.cost || 0).toLocaleString('es-AR')}</td>
                             <td className="px-5 py-3">

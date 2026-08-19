@@ -83,6 +83,21 @@ export async function getProducts(): Promise<Product[]> {
   }
 }
 
+export async function getProductById(id: string): Promise<Product | null> {
+  try {
+    if (hasPostgres) {
+      const { rows } = await sql<Product>`SELECT * FROM products WHERE id = ${id} LIMIT 1`;
+      return rows[0] ?? null;
+    } else {
+      const products = await getProducts();
+      return products.find(p => p.id === id) ?? null;
+    }
+  } catch (error) {
+    console.error('Error fetching product:', error);
+    return null;
+  }
+}
+
 export async function clearProducts() {
   if (hasPostgres) {
     await sql`DELETE FROM products`;

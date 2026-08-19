@@ -26,8 +26,9 @@ export default function Header() {
             <Search className="h-4 w-4 text-blue-400 mr-2 shrink-0" />
             <input
               type="text"
-              placeholder="Buscar productos en la librería..."
-              className="w-full bg-transparent text-sm text-blue-900 outline-none placeholder:text-blue-300"
+              placeholder="Buscar productos..."
+              disabled
+              className="w-full bg-transparent text-sm text-blue-900 outline-none placeholder:text-blue-300 cursor-not-allowed"
             />
           </div>
         </div>
