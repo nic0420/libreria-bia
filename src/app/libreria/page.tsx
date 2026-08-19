@@ -31,37 +31,37 @@ export default async function LibreriaPage() {
   const sortedCategories = Object.keys(productsByCategory).sort();
 
   return (
-    <div className="flex flex-col bg-zinc-50 min-h-screen pb-16">
+    <div className="flex flex-col bg-blue-50/40 min-h-screen pb-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full mt-6">
         
         {/* Breadcrumb */}
-        <nav className="flex text-[11px] text-zinc-400 mb-6 font-medium">
-          <Link href="/" className="hover:text-zinc-900 transition-colors">Inicio</Link>
+        <nav className="flex text-[11px] text-blue-400 mb-6 font-medium">
+          <Link href="/" className="hover:text-blue-700 transition-colors">Inicio</Link>
           <ChevronRight className="w-3 h-3 mx-1.5 mt-0.5" />
-          <span className="text-zinc-700">Catálogo</span>
+          <span className="text-blue-700">Catálogo</span>
         </nav>
 
         {/* Título */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-zinc-900">Catálogo de Productos</h1>
-          <p className="text-xs text-zinc-400 mt-1">
+          <h1 className="text-2xl font-bold text-blue-800">Catálogo de Productos</h1>
+          <p className="text-xs text-blue-400 mt-1">
             {products.length} productos disponibles
           </p>
         </div>
 
         {sortedCategories.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-2xl border border-zinc-100">
-            <h3 className="text-base font-semibold text-zinc-800">No hay productos disponibles</h3>
-            <p className="text-xs text-zinc-400 mt-1">Vuelve más tarde para ver las novedades.</p>
+          <div className="text-center py-20 bg-white rounded-2xl border border-blue-100">
+            <h3 className="text-base font-semibold text-blue-800">No hay productos disponibles</h3>
+            <p className="text-xs text-blue-400 mt-1">Vuelve más tarde para ver las novedades.</p>
           </div>
         ) : (
           <div className="space-y-12">
             {sortedCategories.map((category) => (
               <section key={category} id={category.toLowerCase().replace(/\s+/g, '-')}>
-                <div className="flex items-center justify-between mb-5 border-b border-zinc-200 pb-2">
-                  <h2 className="text-lg font-bold text-zinc-900 flex items-center">
+                <div className="flex items-center justify-between mb-5 border-b border-blue-200 pb-2">
+                  <h2 className="text-lg font-bold text-blue-800 flex items-center">
                     {category}
-                    <span className="ml-3 px-2 py-0.5 bg-zinc-100 text-zinc-500 text-[10px] rounded-full font-semibold">
+                    <span className="ml-3 px-2 py-0.5 bg-blue-100 text-blue-600 text-[10px] rounded-full font-semibold">
                       {productsByCategory[category].length}
                     </span>
                   </h2>

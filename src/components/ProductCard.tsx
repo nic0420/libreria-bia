@@ -45,10 +45,10 @@ export default function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
-    <div className="group relative flex flex-col bg-white rounded-xl overflow-hidden border border-zinc-100 hover:border-zinc-200 transition-all duration-300 hover:shadow-lg">
+    <div className="group relative flex flex-col bg-white rounded-xl overflow-hidden border border-blue-100 hover:border-blue-200 transition-all duration-300 hover:shadow-lg hover:shadow-blue-100">
       
       {/* Imagen del producto */}
-      <Link href={`/producto/${product.id}`} className="relative aspect-square overflow-hidden bg-zinc-50">
+      <Link href={`/producto/${product.id}`} className="relative aspect-square overflow-hidden bg-blue-50/50">
         <Image
           src={product.image}
           alt={product.name}
@@ -59,31 +59,31 @@ export default function ProductCard({ product }: ProductCardProps) {
 
         {/* Badge SIN STOCK */}
         {outOfStock && (
-          <div className="absolute top-2 left-2 bg-zinc-900 text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider">
+          <div className="absolute top-2 left-2 bg-blue-900 text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider">
             Sin Stock
           </div>
         )}
 
         {/* Badge de descuento */}
         {hasDiscount && (
-          <div className="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-md">
+          <div className="absolute top-2 right-2 bg-rose-400 text-white text-[10px] font-bold px-2 py-1 rounded-md">
             Oferta
           </div>
         )}
 
         {/* Overlay de acciones al hacer hover */}
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-blue-900/10 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
           <div className="flex gap-2">
             <Link
               href={`/producto/${product.id}`}
-              className="bg-white hover:bg-zinc-100 text-zinc-900 p-2.5 rounded-lg shadow-lg transition-all flex items-center gap-1.5 text-xs font-semibold"
+              className="bg-white hover:bg-blue-50 text-blue-700 p-2.5 rounded-lg shadow-lg transition-all flex items-center gap-1.5 text-xs font-semibold"
             >
               <Eye className="w-3.5 h-3.5" /> Ver detalle
             </Link>
             {!outOfStock && (
               <button
                 onClick={handleAddToCart}
-                className={`p-2.5 rounded-lg shadow-lg transition-all flex items-center gap-1.5 text-xs font-semibold ${added ? 'bg-emerald-500 text-white' : 'bg-zinc-900 text-white hover:bg-zinc-800'}`}
+                className={`p-2.5 rounded-lg shadow-lg transition-all flex items-center gap-1.5 text-xs font-semibold ${added ? 'bg-emerald-400 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
               >
                 {added ? <Check className="w-3.5 h-3.5" /> : <ShoppingCart className="w-3.5 h-3.5" />}
                 {added ? '¡Agregado!' : 'Comprar'}
@@ -122,7 +122,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         {!outOfStock && (
           <button
             onClick={handleAddToCart}
-            className={`w-full mt-2 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 lg:hidden ${added ? 'bg-emerald-500 text-white' : 'bg-zinc-900 text-white hover:bg-zinc-800'}`}
+            className={`w-full mt-2 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 lg:hidden ${added ? 'bg-emerald-400 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
           >
             {added ? <Check className="w-3.5 h-3.5" /> : <ShoppingCart className="w-3.5 h-3.5" />}
             {added ? '¡Agregado!' : 'Comprar'}

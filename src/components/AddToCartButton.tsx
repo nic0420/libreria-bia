@@ -33,7 +33,7 @@ export default function AddToCartButton({ product }: AddToCartButtonProps) {
     return (
       <button 
         disabled
-        className="w-full flex items-center justify-center py-3.5 rounded-xl font-semibold text-sm bg-zinc-100 text-zinc-400 cursor-not-allowed"
+        className="w-full flex items-center justify-center py-3.5 rounded-xl font-semibold text-sm bg-blue-100 text-blue-400 cursor-not-allowed"
       >
         Sin stock
       </button>
@@ -43,17 +43,17 @@ export default function AddToCartButton({ product }: AddToCartButtonProps) {
   return (
     <div className="flex flex-col gap-3 w-full">
       {/* Selector de cantidad */}
-      <div className="flex items-center justify-between border border-zinc-200 rounded-xl h-11 px-3 bg-white">
+      <div className="flex items-center justify-between border border-blue-200 rounded-xl h-11 px-3 bg-white">
         <button 
           onClick={() => setQuantity(Math.max(1, quantity - 1))}
-          className="p-1 text-zinc-400 hover:text-zinc-900 transition-colors"
+          className="p-1 text-blue-400 hover:text-blue-700 transition-colors"
         >
           <Minus className="w-4 h-4" />
         </button>
         <span className="font-semibold text-sm w-8 text-center">{quantity}</span>
         <button 
           onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-          className="p-1 text-zinc-400 hover:text-zinc-900 transition-colors"
+          className="p-1 text-blue-400 hover:text-blue-700 transition-colors"
         >
           <Plus className="w-4 h-4" />
         </button>
@@ -62,7 +62,7 @@ export default function AddToCartButton({ product }: AddToCartButtonProps) {
       {/* Botón Agregar */}
       <button 
         onClick={handleAddToCart}
-        className={`w-full flex items-center justify-center py-3.5 rounded-xl font-semibold text-sm transition-all ${added ? 'bg-emerald-500 text-white' : 'bg-zinc-900 hover:bg-zinc-800 text-white'}`}
+        className={`w-full flex items-center justify-center py-3.5 rounded-xl font-semibold text-sm transition-all ${added ? 'bg-emerald-400 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
       >
         {added ? <Check className="w-4 h-4 mr-2" /> : <ShoppingCart className="w-4 h-4 mr-2" />}
         {added ? '¡Agregado!' : 'Agregar al carrito'}

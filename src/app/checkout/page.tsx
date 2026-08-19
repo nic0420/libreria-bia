@@ -101,7 +101,7 @@ export default function CheckoutPage() {
   if (!mounted || items.length === 0) return null;
 
   return (
-    <div className="min-h-screen bg-zinc-50 py-8 lg:py-12">
+    <div className="min-h-screen bg-blue-50/40 py-8 lg:py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Breadcrumb simple */}

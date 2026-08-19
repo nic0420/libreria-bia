@@ -50,22 +50,22 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappMessage}`;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-blue-50/40">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         
         {/* Breadcrumb */}
-        <nav className="flex text-[11px] text-zinc-400 mb-6 font-medium">
-          <Link href="/" className="hover:text-zinc-900 transition-colors">Inicio</Link>
+        <nav className="flex text-[11px] text-blue-400 mb-6 font-medium">
+          <Link href="/" className="hover:text-blue-700 transition-colors">Inicio</Link>
           <ChevronRight className="w-3 h-3 mx-1.5 mt-0.5" />
-          <Link href="/libreria" className="hover:text-zinc-900 transition-colors">Catálogo</Link>
+          <Link href="/libreria" className="hover:text-blue-700 transition-colors">Catálogo</Link>
           <ChevronRight className="w-3 h-3 mx-1.5 mt-0.5" />
-          <span className="text-zinc-700 truncate">{product.name}</span>
+          <span className="text-blue-700 truncate">{product.name}</span>
         </nav>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
           
           {/* Imagen del Producto - Grande y centrada */}
-          <div className="relative aspect-square bg-zinc-50 rounded-2xl overflow-hidden border border-zinc-100">
+          <div className="relative aspect-square bg-white rounded-2xl overflow-hidden border border-blue-100">
             <Image
               src={product.image}
               alt={product.name}
@@ -75,12 +75,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
               priority
             />
             {outOfStock && (
-              <div className="absolute top-4 left-4 bg-zinc-900 text-white text-xs font-bold px-3 py-1.5 rounded-lg uppercase tracking-wider">
+              <div className="absolute top-4 left-4 bg-blue-900 text-white text-xs font-bold px-3 py-1.5 rounded-lg uppercase tracking-wider">
                 Sin Stock
               </div>
             )}
             {hasDiscount && (
-              <div className="absolute top-4 right-4 bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg">
+              <div className="absolute top-4 right-4 bg-rose-400 text-white text-xs font-bold px-3 py-1.5 rounded-lg">
                 Oferta
               </div>
             )}
@@ -90,23 +90,23 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <div className="flex flex-col">
             {/* Categoría */}
             {product.category && (
-              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">
+              <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest mb-2">
                 {product.category}
               </span>
             )}
             
             {/* Nombre */}
-            <h1 className="text-2xl sm:text-3xl font-bold text-zinc-900 leading-tight">
+            <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 leading-tight">
               {product.name}
             </h1>
 
             {/* Precio */}
             <div className="mt-4 flex items-baseline gap-3">
-              <span className="text-3xl font-bold text-zinc-900">
+              <span className="text-3xl font-bold text-blue-700">
                 {formatPrice(price)}
               </span>
               {hasDiscount && (
-                <span className="text-base text-zinc-400 line-through">
+                <span className="text-base text-blue-300 line-through">
                   {formatPrice(product.price)}
                 </span>
               )}
@@ -115,7 +115,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             {/* Stock */}
             <div className="mt-4">
               {outOfStock ? (
-                <span className="text-xs font-semibold text-red-600 bg-red-50 px-3 py-1.5 rounded-lg">
+                <span className="text-xs font-semibold text-rose-600 bg-rose-50 px-3 py-1.5 rounded-lg">
                   Sin stock disponible
                 </span>
               ) : (
@@ -127,18 +127,18 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
             {/* Descripción */}
             {product.description && (
-              <div className="mt-6 pt-6 border-t border-zinc-100">
-                <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-2">Descripción</h3>
-                <p className="text-sm text-zinc-600 leading-relaxed whitespace-pre-line">
+              <div className="mt-6 pt-6 border-t border-blue-100">
+                <h3 className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-2">Descripción</h3>
+                <p className="text-sm text-blue-900/70 leading-relaxed whitespace-pre-line">
                   {product.description}
                 </p>
               </div>
             )}
 
             {/* Código */}
-            <div className="mt-4 pt-4 border-t border-zinc-100">
-              <span className="text-[11px] text-zinc-400">
-                Código: <span className="text-zinc-600 font-medium">{product.id}</span>
+            <div className="mt-4 pt-4 border-t border-blue-100">
+              <span className="text-[11px] text-blue-400">
+                Código: <span className="text-blue-700 font-medium">{product.id}</span>
               </span>
             </div>
 
@@ -158,32 +158,32 @@ export default async function ProductPage({ params }: ProductPageProps) {
             </div>
 
             {/* Info de entrega */}
-            <div className="mt-6 pt-6 border-t border-zinc-100 space-y-3">
+            <div className="mt-6 pt-6 border-t border-blue-100 space-y-3">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
                   <span className="text-sm">🚚</span>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-zinc-900">Envío a coordinar</p>
-                  <p className="text-[11px] text-zinc-400">Se coordina por WhatsApp</p>
+                  <p className="text-xs font-semibold text-blue-900">Envío a coordinar</p>
+                  <p className="text-[11px] text-blue-400">Se coordina por WhatsApp</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
                   <span className="text-sm">🏪</span>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-zinc-900">Retiro en local</p>
-                  <p className="text-[11px] text-zinc-400">Barrio San Roque Este</p>
+                  <p className="text-xs font-semibold text-blue-900">Retiro en local</p>
+                  <p className="text-[11px] text-blue-400">Barrio San Roque Este</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
                   <span className="text-sm">💳</span>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-zinc-900">Transferencia / Efectivo</p>
-                  <p className="text-[11px] text-zinc-400">Aceptamos todos los medios de pago</p>
+                  <p className="text-xs font-semibold text-blue-900">Transferencia / Efectivo</p>
+                  <p className="text-[11px] text-blue-400">Aceptamos todos los medios de pago</p>
                 </div>
               </div>
             </div>
