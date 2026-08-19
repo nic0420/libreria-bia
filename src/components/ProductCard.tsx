@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ShoppingCart, Check, Eye } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { useState } from "react";
+import { getColorHex } from "@/lib/colors";
 
 interface ProductCardProps {
   product: Product;
@@ -43,6 +44,10 @@ export default function ProductCard({ product }: ProductCardProps) {
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
+
+  const colorAttr = product.attributes?.find(
+    (a) => a.name.toLowerCase() === "color"
+  );
 
   return (
     <div className="group relative flex flex-col bg-white rounded-xl overflow-hidden border border-blue-100 hover:border-blue-200 transition-all duration-300 hover:shadow-lg hover:shadow-blue-100">
@@ -102,9 +107,26 @@ export default function ProductCard({ product }: ProductCardProps) {
         </Link>
 
         {product.category && (
-          <span className="text-[10px] text-zinc-400 font-medium uppercase tracking-wider">
+          <span className="text-[10px] text-blue-400 font-medium uppercase tracking-wider">
             {product.category}
           </span>
+        )}
+
+        {/* Color dots */}
+        {colorAttr && colorAttr.values.length > 0 && (
+          <div className="flex items-center gap-1 mt-0.5">
+            {colorAttr.values.slice(0, 8).map((v) => (
+              <span
+                key={v.value}
+                className="w-3.5 h-3.5 rounded-full border border-blue-200"
+                style={{ backgroundColor: getColorHex(v.value) }}
+                title={v.value}
+              />
+            ))}
+            {colorAttr.values.length > 8 && (
+              <span className="text-[9px] text-blue-400 font-medium">+{colorAttr.values.length - 8}</span>
+            )}
+          </div>
         )}
 
         <div className="flex items-baseline gap-2 mt-1">

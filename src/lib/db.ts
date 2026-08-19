@@ -1,6 +1,7 @@
 import { sql } from '@vercel/postgres';
 import fs from 'fs/promises';
 import path from 'path';
+import { ProductAttribute } from '@/types/product';
 
 export type Product = {
   id: string;
@@ -12,6 +13,7 @@ export type Product = {
   stock: number;
   category: string;
   image: string;
+  attributes?: ProductAttribute[];
 };
 
 const hasPostgres = !!process.env.POSTGRES_URL;
@@ -49,6 +51,7 @@ export async function createTable() {
     await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS stock INTEGER NOT NULL DEFAULT 0`;
     await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS category VARCHAR(255)`;
     await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS image TEXT`;
+    await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS attributes JSONB`;
   } else {
     await ensureDataDir();
     try {
@@ -91,9 +94,10 @@ export async function clearProducts() {
 
 export async function insertProduct(product: Product) {
   if (hasPostgres) {
+    const attrsJson = product.attributes ? JSON.stringify(product.attributes) : null;
     await sql`
-      INSERT INTO products (id, name, description, price, cost, "discountPrice", stock, category, image)
-      VALUES (${product.id}, ${product.name}, ${product.description}, ${product.price}, ${product.cost}, ${product.discountPrice}, ${product.stock}, ${product.category}, ${product.image})
+      INSERT INTO products (id, name, description, price, cost, "discountPrice", stock, category, image, attributes)
+      VALUES (${product.id}, ${product.name}, ${product.description}, ${product.price}, ${product.cost}, ${product.discountPrice}, ${product.stock}, ${product.category}, ${product.image}, ${attrsJson}::jsonb)
       ON CONFLICT (id) DO UPDATE SET
         name = EXCLUDED.name,
         description = EXCLUDED.description,
@@ -102,7 +106,8 @@ export async function insertProduct(product: Product) {
         "discountPrice" = EXCLUDED."discountPrice",
         stock = EXCLUDED.stock,
         category = EXCLUDED.category,
-        image = EXCLUDED.image;
+        image = EXCLUDED.image,
+        attributes = EXCLUDED.attributes;
     `;
   } else {
     await ensureDataDir();

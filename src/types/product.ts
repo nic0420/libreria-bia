@@ -1,3 +1,14 @@
+export interface ProductAttributeValue {
+  value: string;
+  stock: number;
+  price: number;
+}
+
+export interface ProductAttribute {
+  name: string;
+  values: ProductAttributeValue[];
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -8,4 +19,5 @@ export interface Product {
   stock: number;
   category: string;
   image: string;
+  attributes?: ProductAttribute[];
 }

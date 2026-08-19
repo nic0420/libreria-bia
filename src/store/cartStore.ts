@@ -8,13 +8,14 @@ export type CartItem = {
   image: string;
   quantity: number;
   stock: number;
+  selectedColor?: string;
 };
 
 interface CartState {
   items: CartItem[];
   addItem: (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => void;
-  removeItem: (id: string) => void;
-  updateQuantity: (id: string, quantity: number) => void;
+  removeItem: (id: string, selectedColor?: string) => void;
+  updateQuantity: (id: string, quantity: number, selectedColor?: string) => void;
   clearCart: () => void;
   getTotalItems: () => number;
   getTotalPrice: () => number;
@@ -27,36 +28,41 @@ export const useCartStore = create<CartState>()(
       
       addItem: (newItem) => {
         set((state) => {
-          const existingItem = state.items.find((item) => item.id === newItem.id);
+          const colorKey = newItem.selectedColor || '';
+          const existingItem = state.items.find(
+            (item) => item.id === newItem.id && (item.selectedColor || '') === colorKey
+          );
           const quantityToAdd = newItem.quantity || 1;
           
           if (existingItem) {
-            // Update quantity, maxing out at stock
             const newQuantity = Math.min(existingItem.quantity + quantityToAdd, existingItem.stock);
             return {
               items: state.items.map((item) =>
-                item.id === newItem.id ? { ...item, quantity: newQuantity } : item
+                item.id === newItem.id && (item.selectedColor || '') === colorKey
+                  ? { ...item, quantity: newQuantity }
+                  : item
               ),
             };
           }
           
-          // Add new item
           return {
             items: [...state.items, { ...newItem, quantity: Math.min(quantityToAdd, newItem.stock) }],
           };
         });
       },
       
-      removeItem: (id) => {
+      removeItem: (id, selectedColor) => {
         set((state) => ({
-          items: state.items.filter((item) => item.id !== id),
+          items: selectedColor
+            ? state.items.filter((item) => !(item.id === id && (item.selectedColor || '') === selectedColor))
+            : state.items.filter((item) => item.id !== id),
         }));
       },
       
-      updateQuantity: (id, quantity) => {
+      updateQuantity: (id, quantity, selectedColor) => {
         set((state) => ({
           items: state.items.map((item) => {
-            if (item.id === id) {
+            if (item.id === id && (item.selectedColor || '') === (selectedColor || '')) {
               return { ...item, quantity: Math.max(1, Math.min(quantity, item.stock)) };
             }
             return item;
@@ -77,7 +83,7 @@ export const useCartStore = create<CartState>()(
       },
     }),
     {
-      name: 'libreria-bia-cart', // name of the item in the storage (must be unique)
+      name: 'libreria-bia-cart',
     }
   )
 );

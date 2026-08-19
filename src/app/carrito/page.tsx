@@ -55,20 +55,25 @@ export default function CartPage() {
                     <Link href={`/producto/${item.id}`} className="text-sm font-semibold text-blue-900 hover:text-blue-600 transition-colors line-clamp-2">
                       {item.name}
                     </Link>
+                    {item.selectedColor && (
+                      <span className="text-[10px] text-blue-500 font-medium">
+                        Color: {item.selectedColor}
+                      </span>
+                    )}
                     <p className="text-sm font-bold text-blue-700 mt-0.5">{formatPrice(item.price)}</p>
                   </div>
                   
-                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-2 shrink-0">
                     <div className="flex items-center border border-blue-200 rounded-lg h-8 px-1">
                       <button 
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                        onClick={() => updateQuantity(item.id, item.quantity - 1, item.selectedColor)}
                         className="p-1 text-blue-400 hover:text-blue-700 transition-colors"
                       >
                         <Minus className="w-3.5 h-3.5" />
                       </button>
                       <span className="font-semibold text-xs w-6 text-center">{item.quantity}</span>
                       <button 
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        onClick={() => updateQuantity(item.id, item.quantity + 1, item.selectedColor)}
                         className="p-1 text-blue-400 hover:text-blue-700 transition-colors"
                       >
                         <Plus className="w-3.5 h-3.5" />
@@ -76,7 +81,7 @@ export default function CartPage() {
                     </div>
                     
                     <button 
-                      onClick={() => removeItem(item.id)}
+                      onClick={() => removeItem(item.id, item.selectedColor)}
                       className="text-blue-300 hover:text-red-500 transition-colors p-1.5"
                     >
                       <Trash2 className="w-4 h-4" />

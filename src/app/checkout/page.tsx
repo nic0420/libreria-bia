@@ -56,7 +56,8 @@ export default function CheckoutPage() {
 
     message += `*🛍️ Mi Pedido:*\n`;
     items.forEach(item => {
-      message += `- ${item.quantity}x ${item.name} (${formatPrice(item.price)})\n`;
+      const colorText = item.selectedColor ? ` (${item.selectedColor})` : '';
+      message += `- ${item.quantity}x ${item.name}${colorText} (${formatPrice(item.price)})\n`;
     });
     message += `\n*💰 Total: ${formatPrice(getTotalPrice())}*\n\n`;
 
@@ -234,7 +235,10 @@ export default function CheckoutPage() {
                       </div>
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-zinc-900 line-clamp-2">{item.name}</p>
+                      <p className="text-sm font-medium text-blue-900 line-clamp-2">{item.name}</p>
+                      {item.selectedColor && (
+                        <span className="text-[10px] text-blue-500 font-medium">Color: {item.selectedColor}</span>
+                      )}
                       <p className="text-sm font-bold text-primary-600">{formatPrice(item.price * item.quantity)}</p>
                     </div>
                   </div>

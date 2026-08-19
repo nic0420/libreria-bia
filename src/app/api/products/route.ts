@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createTable, clearProducts, insertProduct, getProducts, Product } from '@/lib/db';
+import { ProductAttribute } from '@/types/product';
 
 export function parseFormattedNumber(val: any): number {
   if (val === null || val === undefined || val === '') return 0;
@@ -75,6 +76,7 @@ export async function POST(request: Request) {
       const stockVal = Math.floor(parseFormattedNumber(pick(raw, ['stock', 'Stock', 'STOCK', 'cantidad', 'Cantidad', 'CANTIDAD', 'unidades', 'Unidades', 'UNIDADES'])));
       const catVal = pick(raw, ['category', 'Category', 'categoria', 'Categoria', 'CATEGORIA', 'categoría', 'Categoría', 'tipo', 'Tipo', 'TIPO']);
       const imgVal = pick(raw, ['image', 'Image', 'imagen', 'Imagen', 'IMAGEN', 'foto', 'Foto', 'FOTO', 'url imagen', 'URL Imagen', 'url', 'URL', 'link', 'Link']);
+      const attrsVal = raw.attributes as ProductAttribute[] | undefined;
 
       const product: Product = {
         id: String(idVal || (i + 1)),
@@ -85,7 +87,8 @@ export async function POST(request: Request) {
         discountPrice: discountVal ? parseFormattedNumber(discountVal) : undefined,
         stock: stockVal,
         category: String(catVal || "General"),
-        image: String(imgVal || "https://via.placeholder.com/300")
+        image: String(imgVal || "https://via.placeholder.com/300"),
+        attributes: Array.isArray(attrsVal) && attrsVal.length > 0 ? attrsVal : undefined,
       };
 
       if (product.discountPrice !== undefined && product.discountPrice <= 0) {
