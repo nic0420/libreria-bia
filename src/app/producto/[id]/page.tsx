@@ -43,7 +43,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappMessage}`;
 
   return (
-    <div className="min-h-screen bg-blue-50/40">
+    <div className="min-h-screen bg-[#faf8f6]">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         
         {/* Breadcrumb */}
@@ -58,7 +58,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
           
           {/* Imagen del Producto - Grande y centrada */}
-          <div className="relative aspect-square bg-white rounded-2xl overflow-hidden border border-blue-100">
+          <div className="relative aspect-square bg-white rounded-2xl overflow-hidden border border-[#e7e5e4]">
             <Image
               src={product.image}
               alt={product.name}
@@ -120,7 +120,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
             {/* Descripción */}
             {product.description && (
-              <div className="mt-6 pt-6 border-t border-blue-100">
+              <div className="mt-6 pt-6 border-t border-[#e7e5e4]">
                 <h3 className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-2">Descripción</h3>
                 <p className="text-sm text-blue-900/70 leading-relaxed whitespace-pre-line">
                   {product.description}
@@ -129,7 +129,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             )}
 
             {/* Código */}
-            <div className="mt-4 pt-4 border-t border-blue-100">
+            <div className="mt-4 pt-4 border-t border-[#e7e5e4]">
               <span className="text-[11px] text-blue-400">
                 Código: <span className="text-blue-700 font-medium">{product.id}</span>
               </span>
@@ -151,9 +151,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
             </div>
 
             {/* Info de entrega */}
-            <div className="mt-6 pt-6 border-t border-blue-100 space-y-3">
+            <div className="mt-6 pt-6 border-t border-[#e7e5e4] space-y-3">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-[#f5f1ec] flex items-center justify-center shrink-0">
                   <span className="text-sm">🚚</span>
                 </div>
                 <div>
@@ -162,7 +162,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-[#f5f1ec] flex items-center justify-center shrink-0">
                   <span className="text-sm">🏪</span>
                 </div>
                 <div>
@@ -171,7 +171,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-[#f5f1ec] flex items-center justify-center shrink-0">
                   <span className="text-sm">💳</span>
                 </div>
                 <div>
