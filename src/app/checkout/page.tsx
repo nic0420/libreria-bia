@@ -3,7 +3,7 @@
 import { useCartStore } from "@/store/cartStore";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { MapPin, Truck, Store, CreditCard, Banknote, Wallet, Phone, ArrowLeft } from "lucide-react";
+import { Truck, Store, CreditCard, Banknote, Wallet, Phone, ArrowLeft } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -12,7 +12,7 @@ type PaymentMethod = "mercadopago" | "wallet" | "cash";
 
 export default function CheckoutPage() {
   const router = useRouter(); const { items, getTotalPrice, clearCart } = useCartStore(); const [mounted, setMounted] = useState(false); const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>("pickup"); const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("mercadopago"); const [formData, setFormData] = useState({ name: "", phone: "", address: "", city: "", notes: "" });
-  useEffect(() => { const frame = requestAnimationFrame(() => setMounted(true)); if (items.length === 0) router.push("/carrito"); return () => cancelAnimationFrame(frame); }, [items.length, router]);
+  useEffect(() => { const timer = window.setTimeout(() => setMounted(true), 0); if (items.length === 0) router.push("/carrito"); return () => window.clearTimeout(timer); }, [items.length, router]);
   const formatPrice = (price: number) => new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(price);
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setFormData({ ...formData, [e.target.name]: e.target.value });
   const generateWhatsAppMessage = () => { let message = `*¡Hola Librería Bia! Quiero realizar un pedido:*\n\n*Mis Datos:*\n- Nombre: ${formData.name}\n- Teléfono: ${formData.phone}\n\n*Mi Pedido:*\n`; items.forEach(item => { message += `- ${item.quantity}x ${item.name} (${formatPrice(item.price)})\n`; }); message += `\n*Total: ${formatPrice(getTotalPrice())}*\n\n*Entrega:* ${deliveryMethod === "home" ? `Envío a domicilio: ${formData.address}, ${formData.city}` : "Retiro en local"}\n*Pago:* ${paymentMethod === "mercadopago" ? "Mercado Pago" : paymentMethod === "wallet" ? "Transferencia Bancaria" : "Efectivo"}\n`; if (formData.notes) message += `\n*Nota:* ${formData.notes}`; return encodeURIComponent(message); };
