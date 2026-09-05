@@ -715,7 +715,7 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="bg-white p-5 rounded-xl shadow-sm border border-zinc-200">
                     <div className="flex items-center gap-3 mb-2">
-                      <div className="p-2.5 bg-blue-50 text-blue-600 rounded-lg">
+                      <div className="p-2.5 bg-[#faf8f6] text-[#e8572f] rounded-lg">
                         <DollarSign className="w-5 h-5" />
                       </div>
                       <div>

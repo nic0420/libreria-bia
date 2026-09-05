@@ -6,40 +6,65 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 
-  /* Azul Principal */
-  --color-primary-50: #eff6ff;
-  --color-primary-100: #dbeafe;
-  --color-primary-200: #bfdbfe;
-  --color-primary-300: #93c5fd;
-  --color-primary-400: #60a5fa;
-  --color-primary-500: #2563eb;
-  --color-primary-600: #1d4ed8;
-  --color-primary-700: #1e40af;
-  --color-primary-800: #1e3a8a;
-  --color-primary-900: #172554;
+  /* Sistema Editorial Premium: Marfil, Carbón, Coral */
+  --color-primary-50: #faf8f6;
+  --color-primary-100: #f5f1ec;
+  --color-primary-200: #ede5dd;
+  --color-primary-300: #e0d4c8;
+  --color-primary-400: #d1bfb0;
+  --color-primary-500: #c4ad98;
+  --color-primary-600: #a68d76;
+  --color-primary-700: #8b6f57;
+  --color-primary-800: #6b5444;
+  --color-primary-900: #453629;
 
-  /* Rosa Pastel Secundario */
-  --color-secondary-50: #fdf2f8;
-  --color-secondary-100: #fce7f3;
-  --color-secondary-200: #fbcfe8;
-  --color-secondary-300: #f9a8d4;
-  --color-secondary-400: #f472b6;
-  --color-secondary-500: #ec4899;
-  --color-secondary-600: #db2777;
-  --color-secondary-700: #be185d;
-  --color-secondary-800: #9d174d;
-  --color-secondary-900: #831843;
+  /* Acento Coral/Mandarina */
+  --color-accent-50: #fff7f0;
+  --color-accent-100: #ffeae1;
+  --color-accent-200: #ffd4c2;
+  --color-accent-300: #ffb8a3;
+  --color-accent-400: #ff9d84;
+  --color-accent-500: #ff8265;
+  --color-accent-600: #ff6b4a;
+  --color-accent-700: #e8572f;
+  --color-accent-800: #cc4422;
+  --color-accent-900: #8b2d15;
+
+  /* Neutros */
+  --color-neutral-50: #fafaf9;
+  --color-neutral-100: #f5f5f4;
+  --color-neutral-200: #e7e5e4;
+  --color-neutral-300: #d6d3d1;
+  --color-neutral-400: #a8a29d;
+  --color-neutral-500: #78716f;
+  --color-neutral-600: #57534e;
+  --color-neutral-700: #44403c;
+  --color-neutral-800: #292622;
+  --color-neutral-900: #1c1917;
+
+  /* Secundario: Verde Salvia */
+  --color-secondary-50: #f6faf8;
+  --color-secondary-100: #eff5f1;
+  --color-secondary-200: #dce8e1;
+  --color-secondary-300: #c9ddd2;
+  --color-secondary-400: #a8cfc0;
+  --color-secondary-500: #7fc0ad;
+  --color-secondary-600: #6ba895;
+  --color-secondary-700: #558e7d;
+  --color-secondary-800: #3d6b63;
+  --color-secondary-900: #274844;
 }
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #faf8f6;
+  --foreground: #1c1917;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  letter-spacing: -0.01em;
 }
 
 .hide-scrollbar::-webkit-scrollbar {
@@ -50,21 +75,66 @@ body {
   scrollbar-width: none;
 }
 
-@keyframes marquee {
-  0% { transform: translateX(0%); }
-  100% { transform: translateX(-50%); }
-}
-.animate-marquee {
-  animation: marquee 30s linear infinite;
+/* Animaciones suaves */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-@keyframes scroll {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
-.animate-scroll {
-  animation: scroll 40s linear infinite;
+
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
 }
-.animate-scroll:hover {
-  animation-play-state: paused;
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.4s ease-out;
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Backdrop */
+@supports (backdrop-filter: blur(1px)) {
+  .backdrop-blur-xl {
+    backdrop-filter: blur(16px);
+  }
+}
+
+/* Scroll suave */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Prefers reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

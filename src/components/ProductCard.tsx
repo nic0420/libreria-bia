@@ -3,153 +3,48 @@
 import { Product } from "@/types/product";
 import Image from "next/image";
 import Link from "next/link";
-import { ShoppingCart, Check, Eye } from "lucide-react";
+import { ShoppingCart, Check, ArrowUpRight } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { useState } from "react";
-import { getColorHex } from "@/lib/colors";
 
-interface ProductCardProps {
-  product: Product;
-}
+interface ProductCardProps { product: Product; }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("es-AR", {
-      style: "currency",
-      currency: "ARS",
-      maximumFractionDigits: 0,
-    }).format(price);
-  };
-
-  const addItem = useCartStore(state => state.addItem);
+  const addItem = useCartStore((state) => state.addItem);
   const [added, setAdded] = useState(false);
-  const [showDetail, setShowDetail] = useState(false);
-
   const price = product.discountPrice ?? product.price;
   const hasDiscount = product.discountPrice != null;
   const outOfStock = product.stock <= 0;
+  const formatPrice = (value: number) => new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(value);
 
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleAddToCart = (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
     if (outOfStock) return;
-    addItem({
-      id: product.id,
-      name: product.name,
-      price: price,
-      image: product.image,
-      stock: product.stock,
-      quantity: 1
-    });
+    addItem({ id: product.id, name: product.name, price, image: product.image, stock: product.stock, quantity: 1 });
     setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
+    window.setTimeout(() => setAdded(false), 1800);
   };
 
-  const colorAttr = product.attributes?.find(
-    (a) => a.name.toLowerCase() === "color"
-  );
-
   return (
-    <div className="group relative flex flex-col bg-white rounded-xl overflow-hidden border border-blue-100 hover:border-blue-200 transition-all duration-300 hover:shadow-lg hover:shadow-blue-100">
-      
-      {/* Imagen del producto */}
-      <Link href={`/producto/${product.id}`} className="relative aspect-square overflow-hidden bg-blue-50/50">
-        <Image
-          src={product.image}
-          alt={product.name}
-          fill
-          sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
-        />
-
-        {/* Badge SIN STOCK */}
-        {outOfStock && (
-          <div className="absolute top-2 left-2 bg-blue-900 text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider">
-            Sin Stock
-          </div>
-        )}
-
-        {/* Badge de descuento */}
-        {hasDiscount && (
-          <div className="absolute top-2 right-2 bg-rose-400 text-white text-[10px] font-bold px-2 py-1 rounded-md">
-            Oferta
-          </div>
-        )}
-
-        {/* Overlay de acciones al hacer hover */}
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-blue-900/10 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-          <div className="flex gap-2">
-            <span
-              className="bg-white hover:bg-blue-50 text-blue-700 p-2.5 rounded-lg shadow-lg transition-all flex items-center gap-1.5 text-xs font-semibold cursor-pointer"
-            >
-              <Eye className="w-3.5 h-3.5" /> Ver detalle
-            </span>
-            {!outOfStock && (
-              <button
-                onClick={handleAddToCart}
-                className={`p-2.5 rounded-lg shadow-lg transition-all flex items-center gap-1.5 text-xs font-semibold ${added ? 'bg-emerald-400 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
-              >
-                {added ? <Check className="w-3.5 h-3.5" /> : <ShoppingCart className="w-3.5 h-3.5" />}
-                {added ? '¡Agregado!' : 'Comprar'}
-              </button>
-            )}
-          </div>
+    <article className="group flex flex-col gap-3">
+      <Link href={`/producto/${product.id}`} className="relative aspect-[4/5] overflow-hidden rounded-[1.35rem] bg-[#f5f1ec]">
+        <Image src={product.image} alt={product.name} fill sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw" className="object-cover transition-transform duration-700 group-hover:scale-105" />
+        <div className="absolute inset-x-3 top-3 flex items-start justify-between">
+          <span className="rounded-full bg-[#faf8f6]/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#57534e] backdrop-blur-sm">{product.category || "Selección Bia"}</span>
+          {hasDiscount && <span className="rounded-full bg-[#ff6b4a] px-2.5 py-1 text-[10px] font-semibold text-white">Oferta</span>}
         </div>
+        <div className="absolute inset-x-3 bottom-3 flex translate-y-2 items-center justify-between opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#faf8f6] px-3 py-2 text-xs font-semibold text-[#1c1917] shadow-lg">Ver detalle <ArrowUpRight className="size-3.5" /></span>
+          {!outOfStock && <button onClick={handleAddToCart} className="rounded-full bg-[#ff6b4a] p-2.5 text-white shadow-lg transition-colors hover:bg-[#e8572f]" aria-label={`Agregar ${product.name} al carrito`}>{added ? <Check className="size-4" /> : <ShoppingCart className="size-4" />}</button>}
+        </div>
+        {outOfStock && <span className="absolute bottom-3 left-3 rounded-full bg-[#1c1917]/85 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-white">Agotado</span>}
       </Link>
-
-      {/* Info del producto */}
-      <div className="p-3 flex flex-col gap-1.5">
-        <Link href={`/producto/${product.id}`}>
-          <h3 className="text-sm font-semibold text-zinc-900 line-clamp-2 leading-snug hover:text-zinc-600 transition-colors">
-            {product.name}
-          </h3>
-        </Link>
-
-        {product.category && (
-          <span className="text-[10px] text-blue-400 font-medium uppercase tracking-wider">
-            {product.category}
-          </span>
-        )}
-
-        {/* Color dots */}
-        {colorAttr && colorAttr.values.length > 0 && (
-          <div className="flex items-center gap-1 mt-0.5">
-            {colorAttr.values.slice(0, 8).map((v) => (
-              <span
-                key={v.value}
-                className="w-3.5 h-3.5 rounded-full border border-blue-200"
-                style={{ backgroundColor: getColorHex(v.value) }}
-                title={v.value}
-              />
-            ))}
-            {colorAttr.values.length > 8 && (
-              <span className="text-[9px] text-blue-400 font-medium">+{colorAttr.values.length - 8}</span>
-            )}
-          </div>
-        )}
-
-        <div className="flex items-baseline gap-2 mt-1">
-          <span className="text-lg font-bold text-zinc-900">
-            {formatPrice(price)}
-          </span>
-          {hasDiscount && (
-            <span className="text-xs text-zinc-400 line-through">
-              {formatPrice(product.price)}
-            </span>
-          )}
-        </div>
-
-        {/* Botón Comprar siempre visible en mobile */}
-        {!outOfStock && (
-          <button
-            onClick={handleAddToCart}
-            className={`w-full mt-2 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 lg:hidden ${added ? 'bg-emerald-400 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
-          >
-            {added ? <Check className="w-3.5 h-3.5" /> : <ShoppingCart className="w-3.5 h-3.5" />}
-            {added ? '¡Agregado!' : 'Comprar'}
-          </button>
-        )}
+      <div className="flex items-start justify-between gap-3 px-1">
+        <div className="min-w-0"><Link href={`/producto/${product.id}`}><h3 className="line-clamp-2 text-sm font-semibold leading-5 text-[#1c1917] transition-colors hover:text-[#ff6b4a]">{product.name}</h3></Link><p className="mt-1 text-xs text-[#a8a29d]">{product.stock > 0 ? `${product.stock} disponibles` : "Sin stock"}</p></div>
+        <div className="shrink-0 text-right"><p className="text-sm font-semibold text-[#1c1917]">{formatPrice(price)}</p>{hasDiscount && <p className="text-xs text-[#a8a29d] line-through">{formatPrice(product.price)}</p>}</div>
       </div>
-    </div>
+      {!outOfStock && <button onClick={handleAddToCart} className="mt-1 inline-flex items-center justify-center gap-2 rounded-full border border-[#d6d3d1] py-2.5 text-xs font-semibold text-[#57534e] transition-all hover:border-[#ff8265] hover:bg-[#fff7f0] hover:text-[#e8572f] sm:hidden">{added ? <><Check className="size-3.5" /> Agregado</> : <><ShoppingCart className="size-3.5" /> Agregar</>}</button>}
+    </article>
   );
 }

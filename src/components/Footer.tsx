@@ -1,70 +1,15 @@
 import Link from "next/link";
-import { MapPin, Phone, Mail } from "lucide-react";
+import { ArrowUpRight, Camera, MapPin, Phone } from "lucide-react";
 
 export default function Footer() {
   return (
-    <footer className="bg-blue-900 border-t border-blue-800">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          
-          {/* Marca */}
-          <div>
-            <h3 className="text-base font-bold text-white">Librería Bia</h3>
-            <p className="mt-2 text-xs text-blue-200 max-w-xs leading-relaxed">
-              Útiles, papelería y artículos de oficina. Envíos y retiros coordinados por WhatsApp.
-            </p>
-          </div>
-
-          {/* Links */}
-          <div>
-            <h4 className="text-xs font-bold text-blue-300 uppercase tracking-widest mb-3">Navegación</h4>
-            <ul className="space-y-2">
-              <li>
-                <Link href="/" className="text-xs text-blue-200 hover:text-white transition-colors">
-                  Inicio
-                </Link>
-              </li>
-              <li>
-                <Link href="/libreria" className="text-xs text-blue-200 hover:text-white transition-colors">
-                  Catálogo
-                </Link>
-              </li>
-              <li>
-                <Link href="/checkout" className="text-xs text-blue-200 hover:text-white transition-colors">
-                  Carrito
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Contacto */}
-          <div>
-            <h4 className="text-xs font-bold text-blue-300 uppercase tracking-widest mb-3">Contacto</h4>
-            <ul className="space-y-2.5">
-              <li className="flex items-center gap-2 text-xs text-blue-200">
-                <MapPin className="w-3.5 h-3.5 text-blue-300 shrink-0" />
-                <span>Barrio San Roque Este, Corrientes</span>
-              </li>
-              <li className="flex items-center gap-2 text-xs text-blue-200">
-                <Phone className="w-3.5 h-3.5 text-blue-300 shrink-0" />
-                <span>+54 9 379 401-2485</span>
-              </li>
-              <li className="flex items-center gap-2 text-xs text-blue-200">
-                <Mail className="w-3.5 h-3.5 text-blue-300 shrink-0" />
-                <span>libreria.bia@gmail.com</span>
-              </li>
-            </ul>
-          </div>
+    <footer className="border-t border-[#e7e5e4] bg-[#1c1917] text-[#faf8f6]">
+      <div className="mx-auto max-w-7xl px-5 py-14 sm:px-8">
+        <div className="flex flex-col gap-12 md:flex-row md:justify-between">
+          <div className="max-w-sm"><p className="text-2xl font-semibold tracking-tight">Librería Bia<span className="text-[#ff8265]">.</span></p><p className="mt-4 text-sm leading-6 text-[#a8a29d]">Un espacio para encontrar los objetos que acompañan tus ideas, tus proyectos y tus días.</p></div>
+          <div className="grid grid-cols-2 gap-12 sm:grid-cols-3"><div><p className="mb-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#78716f]">Explorar</p><div className="flex flex-col gap-3 text-sm text-[#d6d3d1]"><Link href="/" className="hover:text-[#ff8265]">Inicio</Link><Link href="/libreria" className="hover:text-[#ff8265]">Catálogo</Link><Link href="/#novedades" className="hover:text-[#ff8265]">Novedades</Link></div></div><div><p className="mb-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#78716f]">Contacto</p><div className="flex flex-col gap-3 text-sm text-[#d6d3d1]"><span className="flex gap-2"><MapPin className="size-4 text-[#ff8265]" /> Corrientes</span><span className="flex gap-2"><Phone className="size-4 text-[#ff8265]" /> +54 9 379 401-2485</span></div></div><div><p className="mb-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#78716f]">Seguinos</p><Link href="#" className="inline-flex items-center gap-2 text-sm text-[#d6d3d1] hover:text-[#ff8265]"><Camera className="size-4" /> Instagram <ArrowUpRight className="size-3" /></Link></div></div>
         </div>
-
-        <div className="mt-8 pt-6 border-t border-blue-800 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p className="text-[11px] text-blue-300">
-            &copy; {new Date().getFullYear()} Librería Bia. Todos los derechos reservados.
-          </p>
-          <p className="text-[11px] text-blue-400">
-            Aceptamos transferencia y efectivo
-          </p>
-        </div>
+        <div className="mt-14 flex flex-col gap-3 border-t border-[#44403c] pt-5 text-xs text-[#78716f] sm:flex-row sm:justify-between"><span>© {new Date().getFullYear()} Librería Bia</span><span>Hecho para crear cosas lindas.</span></div>
       </div>
     </footer>
   );

@@ -10,14 +10,15 @@ export default function CartIcon() {
   const totalItems = useCartStore((state) => state.getTotalItems());
 
   useEffect(() => {
-    setMounted(true);
+    const timer = window.setTimeout(() => setMounted(true), 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   return (
-    <Link href="/carrito" className="relative flex items-center gap-1.5 group text-blue-600 hover:text-blue-800 transition-colors">
+    <Link href="/carrito" className="relative flex items-center gap-1.5 group text-[#ff6b4a] hover:text-[#e8572f] transition-colors">
       <ShoppingCart className="w-5 h-5" />
       {mounted && totalItems > 0 && (
-        <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white px-1">
+        <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#ff6b4a] text-[10px] font-bold text-white px-1">
           {totalItems}
         </span>
       )}
